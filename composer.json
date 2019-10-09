@@ -1,0 +1,27 @@
+{
+    "name": "setastart/galaxia-core",
+    "type": "library",
+    "description": "Core library to be used by Galaxia Websites and Galaxia Editor.",
+    "keywords": [],
+    "homepage": "https://setastart.com/",
+
+    "require": {
+        "php": ">=7.1.0"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "Galaxia\\": "classes"
+        },
+        "files": [
+            "./functions/array.php",
+            "./functions/calendar.php",
+            "./functions/error.php",
+            "./functions/gFile.php",
+            "./functions/gImage.php",
+            "./functions/input.php",
+            "./functions/sql.php",
+            "./functions/text.php"
+        ]
+    }
+}
