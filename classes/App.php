@@ -52,6 +52,11 @@ class App {
     public $lang     = 'en';
     public $timeZone = 'Europe/Lisbon';
 
+    public $cookieEditorKey = 'galaxiaEditor';
+    public $cookieNginxCacheBypassKey = '';
+    public $cookieDebugKey = 'debug';
+    public $cookieDebugVal = '';
+
     public $imageCompressionQuality = 90;
 
 
@@ -68,6 +73,11 @@ class App {
         $this->dirCache  = $this->dir . 'var/cache/';
         $this->dirLog    = $this->dir . 'var/logs/';
         $this->dirImages = $this->dir . 'var/media/images/';
+
+        require $this->dir . 'config/app.php';
+
+        if (file_exists($this->dir . 'config/cookies.php'))
+            include $this->dir . 'config/cookies.php';
 
         if (isset($_SERVER['REQUEST_URI'])) {
             $this->requestUri = urldecode($_SERVER['REQUEST_URI'] ?? '');
@@ -628,8 +638,8 @@ class App {
                 if ($resize && !file_exists($file)) {
 
                     if (!$imagickLoaded) {
+                        $imagick = new \Imagick($imgDirSlug . $img['ext']);
                         try {
-                            $imagick = new \Imagick($imgDirSlug . $img['ext']);
                             if ($img['ext'] == '.jpg') {
                                 $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
                                 $imagick->setImageCompressionQuality($this->imageCompressionQuality);
@@ -816,7 +826,7 @@ class App {
 
         if (!$bypass && file_exists($cacheFile)) {
 
-            $timerName = 'Load cache: ' . $cacheName;
+            $timerName = 'Cache HIT: ' . $cacheName;
             \Galaxia\Director::timerStart($timerName);
 
             $result = include $cacheFile;
@@ -824,8 +834,8 @@ class App {
         } else {
 
             $result = null;
-            $cacheType = $bypass ? 'BYPASS' : 'NO';
-            $timerName = 'Load ' . $cacheType . ' cache: ' . $cacheName;
+            $cacheType = $bypass ? 'BYPASS' : 'MISS';
+            $timerName = 'Cache ' . $cacheType . ': ' . $cacheName;
             \Galaxia\Director::timerStart($timerName);
 
             $lockFile = $this->dirCache . 'flocks/' . $cacheName . '.lock';

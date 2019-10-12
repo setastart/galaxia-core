@@ -40,8 +40,6 @@ class User {
 
     public function logInFromCookieSessionId($cookieName) {
         if (!isset($_COOKIE[$cookieName])) return;
-
-        $db = Director::mysql();
         Director::timerStart('Session');
 
         session_name($cookieName);

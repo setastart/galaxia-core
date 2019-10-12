@@ -13,6 +13,7 @@
 */
 
 namespace Galaxia;
+use mysqli;
 use Galaxia\{App, Editor};
 
 
@@ -46,10 +47,8 @@ class Director {
         'noindex' => false,
         'ogImage' => '',
     ];
-    static $nofollowHosts = ['facebook', 'google', 'instagram', 'twitter', 'linkedin', 'youtube'];
-    static $nginxCacheBypassCookie = 'galaxiaCacheBypass_j49c9e0merhvjd0';
-
     static $ajax = false;
+    static $nofollowHosts = ['facebook', 'google', 'instagram', 'twitter', 'linkedin', 'youtube'];
 
     // debug
     static $debug = false;
@@ -61,28 +60,43 @@ class Director {
 
 
 
-    static function init() {
-        libxml_use_internal_errors(true);
-        if (self::$app) errorPage(500, 'director initialization ' . __LINE__);
-
-        self::timerStart('app total', $_SERVER['REQUEST_TIME_FLOAT']);
-
-        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'))
-            self::$ajax = true;
+    static function init($dir) : App {
+        if (self::$app) errorPage(500, 'Director initialization ' . __LINE__);
 
         ini_set('display_errors', '0');
-        // if (php_sapi_name() == 'cli' || (isset($_COOKIE) && isset($_COOKIE['debug']) && $_COOKIE['debug'] == '3489jwmpr0j5s0g5gs984p')) {
-            self::$debug = true;
-            ini_set('display_errors', '1');
-            error_reporting(E_ALL);
-        // }
+        if (php_sapi_name() == 'cli') self::setDebug();
+
+        libxml_use_internal_errors(true);
+
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')) self::$ajax = true;
+
+        $app = new App($dir);
+
+        if ($app->cookieDebugVal && $app->cookieDebugKey && isset($_COOKIE)) {
+            if (isset($_COOKIE[$app->cookieDebugKey]) && $_COOKIE[$app->cookieDebugKey] == $app->cookieDebugVal) {
+                self::setDebug();
+            }
+        }
+
+        self::$app = $app;
+        self::timerStart('app total', $_SERVER['REQUEST_TIME_FLOAT']);
+        return self::$app;
+    }
+
+
+
+
+    private static function setDebug() {
+        self::$debug = true;
+        ini_set('display_errors', '1');
+        error_reporting(E_ALL);
     }
 
 
 
 
     static function app() : App {
-        if (!self::$app) errorPage(500, 'director initialization ' . __LINE__);
+        if (!self::$app) errorPage(500, 'Director app initialization ' . __LINE__);
         return self::$app;
     }
 
@@ -90,21 +104,21 @@ class Director {
 
 
     static function editor() : Editor {
-        if (!self::$editor) errorPage(500, 'editor initialization ' . __LINE__);
+        if (!self::$editor) errorPage(500, 'Director editor initialization ' . __LINE__);
         return self::$editor;
     }
 
 
 
 
-    static function mysql() : \mysqli {
+    static function mysql() : mysqli {
         if (!self::$mysql) {
             self::timerStart('DB Connection');
 
             if (!file_exists(self::$app->dir . 'config/mysql.php')) errorPage(500, 'director db configuration ' . __LINE__);
             self::$mysqlConfig = array_merge(self::$mysqlConfig, include self::$app->dir . 'config/mysql.php');
 
-            self::$mysql = new \mysqli(self::$mysqlConfig['host'], self::$mysqlConfig['user'], self::$mysqlConfig['pass'], self::$mysqlConfig['db']);
+            self::$mysql = new mysqli(self::$mysqlConfig['host'], self::$mysqlConfig['user'], self::$mysqlConfig['pass'], self::$mysqlConfig['db']);
             if (self::$mysql->connect_errno) {
                 echo '<pre>'; var_dump(get_included_files(), self::$mysqlConfig);
                 errorPage(500, 'Connection Failed: ' . self::$mysql->connect_errno);
@@ -177,8 +191,8 @@ class Director {
 
     // timing
 
-    static function timerStart($timerName, $timeFloat = null) {
-        // if (!self::$debug) return;
+    static function timerStart(string $timerName, $timeFloat = null) {
+        if (!self::$debug) return;
         if (isset(self::$timers[$timerName])) {
             if (self::$timers[$timerName]['running']) return;
             self::$timers[$timerName]['lap'] = microtime(true);
@@ -200,8 +214,8 @@ class Director {
         }
     }
 
-    static function timerStop($timerName) {
-        // if (!self::$debug) return;
+    static function timerStop(string $timerName) {
+        if (!self::$debug) return;
         if (!isset(self::$timers[$timerName])) return;
         if (!self::$timers[$timerName]['running']) return;
 
@@ -213,8 +227,8 @@ class Director {
         self::$timers[$timerName]['count']++;
     }
 
-    static function timerPrint($comments = false) {
-        // if (!self::$debug) return;
+    static function timerPrint(bool $comments = false, bool $memory = false) {
+        if (!self::$debug) return;
         $timeEnd = microtime(true);
         self::$timers['app total']['end'] = microtime(true);
         self::$timers['app total']['total'] += self::$timers['app total']['end'] - self::$timers['app total']['lap'];
@@ -237,8 +251,8 @@ class Director {
         $r .= $prefix .
             '..... start' .
             ' .. #' .
-            ' .... total' .
-            ' . %tot' .
+            ' ..... time' .
+            ' .... %' .
             ' ..' . str_repeat(' .%', self::$timerMaxLev - 1) .
             ' .' . $postfix;
 
@@ -282,6 +296,12 @@ class Director {
                 $r .= str_pad(str_repeat($pad . $pad, $time['level'] - 1) . (($time['level'] > 0) ? ' ' : '') . $timerName, self::$timerMaxLen + 1, ' ', STR_PAD_RIGHT) . $postfix;
             }
 
+        }
+
+        if ($memory) {
+            $r .= $prefix . 'script peak ...' . str_pad(' ' . number_format(memory_get_peak_usage()), 12, '.', STR_PAD_LEFT) . ' bytes' . $postfix;
+            $r .= $prefix . 'system at end .' . str_pad(' ' . number_format(memory_get_usage(false)), 12, '.', STR_PAD_LEFT) . ' bytes' . $postfix;
+            $r .= $prefix . 'system peak ...' . str_pad(' ' . number_format(memory_get_peak_usage(true)), 12, '.', STR_PAD_LEFT) . ' bytes' . $postfix;
         }
         echo $r;
     }

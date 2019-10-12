@@ -175,12 +175,11 @@ function gImageValid(string $dirImages, string $imgSlug) {
 
 
 
-// todo: check for errors
 function gImageDelete(string $dirImages, string $imgSlug) {
     if (!gImageValid($dirImages, $imgSlug)) return false;
 
     foreach (new DirectoryIterator($dirImages . $imgSlug) as $fileInfo) {
-        if($fileInfo->isDot()) continue;
+        if ($fileInfo->isDot()) continue;
         unlink($fileInfo->getPathname());
     }
     rmdir($dirImages . $imgSlug);
