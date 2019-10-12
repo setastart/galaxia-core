@@ -71,7 +71,7 @@ class App {
         $this->dirModel  = $this->dir . 'src/models/';
         $this->dirView   = $this->dir . 'src/templates/';
         $this->dirCache  = $this->dir . 'var/cache/';
-        $this->dirLog    = $this->dir . 'var/logs/';
+        $this->dirLog    = $this->dir . 'var/log/';
         $this->dirImages = $this->dir . 'var/media/images/';
 
         require $this->dir . 'config/app.php';
