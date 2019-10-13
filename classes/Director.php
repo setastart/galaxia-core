@@ -14,29 +14,24 @@
 
 namespace Galaxia;
 use mysqli;
-use Galaxia\{App, Editor};
+use Galaxia\{App, Editor, User};
 
 
 class Director {
 
-    static $app    = null;
-    static $editor = null;
-    static $me     = null;
-    static $mysql  = null;
+    private static $app    = null;
+    private static $editor = null;
+    private static $me     = null;
+    private static $mysqli  = null;
 
     static $transliterator      = null;
     static $transliteratorLower = null;
     static $intlDateFormatters  = [];
 
     static $translations = [];
-    static $mysqlConfig = [
-        'host'   => '127.0.0.1',
-        'db'     => '',
-        'user'   => '',
-        'pass'   => '',
-        'tz'     => 'Europe/Lisbon',
-        'locale' => 'en_US',
-    ];
+    static $ajax = false;
+    static $nofollowHosts = ['facebook', 'google', 'instagram', 'twitter', 'linkedin', 'youtube'];
+
     static $pDefault = [
         'id'      => '', // current subpage or page id
         'type'    => 'default',
@@ -47,8 +42,6 @@ class Director {
         'noindex' => false,
         'ogImage' => '',
     ];
-    static $ajax = false;
-    static $nofollowHosts = ['facebook', 'google', 'instagram', 'twitter', 'linkedin', 'youtube'];
 
     // debug
     static $debug = false;
@@ -60,12 +53,18 @@ class Director {
 
 
 
-    static function init($dir) : App {
-        if (self::$app) errorPage(500, 'Director initialization ' . __LINE__);
+    static function init(string $dir) : App {
+        register_shutdown_function('\Galaxia\Director::onShutdown');
+
+        if (self::$app)    self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
+        if (!$dir)         self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
+        if (!is_dir($dir)) self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' $dir is not a directory');
+        if (!file_exists($dir . '/config/app.php')) self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
+
+        header('Content-Type: text/html; charset=utf-8');
+        header_remove("X-Powered-By");
 
         ini_set('display_errors', '0');
-        if (php_sapi_name() == 'cli') self::setDebug();
-
         libxml_use_internal_errors(true);
 
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')) self::$ajax = true;
@@ -74,7 +73,7 @@ class Director {
 
         if ($app->cookieDebugVal && $app->cookieDebugKey && isset($_COOKIE)) {
             if (isset($_COOKIE[$app->cookieDebugKey]) && $_COOKIE[$app->cookieDebugKey] == $app->cookieDebugVal) {
-                self::setDebug();
+                self::debugEnable();
             }
         }
 
@@ -86,7 +85,54 @@ class Director {
 
 
 
-    private static function setDebug() {
+    static function initCLI(string $dir) : App {
+        register_shutdown_function('\Galaxia\Director::onShutdownCLI');
+
+        if (self::$app)    self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
+        if (!$dir)         self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
+        if (!is_dir($dir)) self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' $dir is not a directory');
+        if (!file_exists($dir . '/config/app.php')) self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
+
+        libxml_use_internal_errors(true);
+
+        self::debugEnable();
+
+        $app = new App($dir);
+
+        self::$app = $app;
+        self::timerStart('app total', $_SERVER['REQUEST_TIME_FLOAT']);
+        return self::$app;
+    }
+
+
+
+
+    static function initEditor(string $dir) : Editor {
+        if (!self::$app)   self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
+        if (self::$editor) self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' Editor was already initialized');
+        if (!$dir)         self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
+        if (!is_dir($dir)) self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' $dir is not a directory');
+
+        $editor = new Editor($dir);
+        self::$editor = $editor;
+        return $editor;
+    }
+
+
+
+
+    static function initMe() : User {
+        if (!self::$app) self::errorPageAndExit(500, 'Director user initialization', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
+        if (self::$me)   self::errorPageAndExit(500, 'Director user initialization', __METHOD__ . ':' . __LINE__ . ' User was already initialized');
+        $me = new User('_geUser');
+        self::$me = $me;
+        return $me;
+    }
+
+
+
+
+    private static function debugEnable() {
         self::$debug = true;
         ini_set('display_errors', '1');
         error_reporting(E_ALL);
@@ -95,8 +141,8 @@ class Director {
 
 
 
-    static function app() : App {
-        if (!self::$app) errorPage(500, 'Director app initialization ' . __LINE__);
+    static function getApp() : App {
+        if (!self::$app) self::errorPageAndExit(500, 'Director app', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         return self::$app;
     }
 
@@ -104,34 +150,41 @@ class Director {
 
 
     static function editor() : Editor {
-        if (!self::$editor) errorPage(500, 'Director editor initialization ' . __LINE__);
+        if (!self::$app)    self::errorPageAndExit(500, 'Director editor', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
+        if (!self::$editor) self::errorPageAndExit(500, 'Director editor', __METHOD__ . ':' . __LINE__ . ' Editor was not initialized');
         return self::$editor;
     }
 
 
 
 
-    static function mysql() : mysqli {
-        if (!self::$mysql) {
+    static function getMe($userTable) : User {
+        if (!self::$app) self::errorPageAndExit(500, 'Director me', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
+        if (!self::$me)  self::errorPageAndExit(500, 'Director me', __METHOD__ . ':' . __LINE__ . ' User was not initialized');
+        return self::$me;
+    }
+
+
+
+
+    static function getMysqli() : mysqli {
+        if (!self::$app) self::errorPageAndExit(500, 'Director db', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
+        if (!self::$mysqli) {
             self::timerStart('DB Connection');
 
-            if (!file_exists(self::$app->dir . 'config/mysql.php')) errorPage(500, 'director db configuration ' . __LINE__);
-            self::$mysqlConfig = array_merge(self::$mysqlConfig, include self::$app->dir . 'config/mysql.php');
-
-            self::$mysql = new mysqli(self::$mysqlConfig['host'], self::$mysqlConfig['user'], self::$mysqlConfig['pass'], self::$mysqlConfig['db']);
-            if (self::$mysql->connect_errno) {
-                echo '<pre>'; var_dump(get_included_files(), self::$mysqlConfig);
-                errorPage(500, 'Connection Failed: ' . self::$mysql->connect_errno);
+            self::$mysqli = new mysqli(self::$app->mysqlHost, self::$app->mysqlUser, self::$app->mysqlPass, self::$app->mysqlDb);
+            if (self::$mysqli->connect_errno) {
+                self::errorPageAndExit(500, 'Director db Connection Failed' . __METHOD__ . ':' . __LINE__ . ' ' . self::$mysqli->connect_errno);
             }
             if (self::$debug) mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-            self::$mysql->set_charset('utf8mb4');
-            self::$mysql->query('SET time_zone = ' . q(self::$mysqlConfig['tz']) . ';');
-            self::$mysql->query('SET lc_time_names = ' . q(self::$mysqlConfig['locale']) . ';');
+            self::$mysqli->set_charset('utf8mb4');
+            self::$mysqli->query('SET time_zone = ' . q(self::$app->timeZone) . ';');
+            self::$mysqli->query('SET lc_time_names = ' . q(self::$app->locale['long']) . ';');
 
             self::timerStop('DB Connection');
         };
-        return self::$mysql;
+        return self::$mysqli;
     }
 
 
@@ -140,11 +193,11 @@ class Director {
     static function loadTranslations() {
         self::timerStart('Translations');
 
-        if (self::$editor && file_exists(self::$editor->dir . 'resources/stringTranslations.php'))
-            self::$translations = array_merge(self::$translations, include (self::$editor->dir . 'resources/stringTranslations.php'));
+        if (self::$editor && file_exists(self::$editor->dir . 'resource/stringTranslations.php'))
+            self::$translations = array_merge(self::$translations, include (self::$editor->dir . 'resource/stringTranslations.php'));
 
-        if (self::$app && file_exists(self::$app->dir . 'resources/stringTranslations.php'))
-            self::$translations = array_merge(self::$translations, include (self::$app->dir . 'resources/stringTranslations.php'));
+        if (self::$app && file_exists(self::$app->dir . 'resource/stringTranslations.php'))
+            self::$translations = array_merge(self::$translations, include (self::$app->dir . 'resource/stringTranslations.php'));
 
         self::timerStop('Translations');
     }
@@ -307,9 +360,15 @@ class Director {
     }
 
 
+
+
     // shutdown functions
 
-    static function cliShutdown() {
+    static function onShutdown() {
+        Director::timerPrint(true, true);
+    }
+
+    static function onShutdownCLI() {
         if (haserror()) {
             echo '🍎 errors: ' . PHP_EOL;
             foreach (errors() as $key => $msgs) {
@@ -347,6 +406,55 @@ class Director {
             }
         }
         Director::timerPrint();
+    }
+
+
+
+
+    // general error page
+
+    static function errorPageAndExit($errorCode, $msg = '', $debugText = '') {
+
+        $errors = [
+            403 => 'Forbidden',
+            404 => 'Not Found',
+            500 => 'Internal Server Error',
+        ];
+        if (!in_array($errorCode, [403, 404, 500])) $errorCode = 500;
+        http_response_code($errorCode);
+
+        $prefix = '<!-- ';
+        $suffix = ' -->' . PHP_EOL;
+        if (php_sapi_name() == 'cli') {
+            $prefix = '';
+            $suffix = PHP_EOL;
+            echo 'Error: ' . h($errorCode) . ' - ' . h($errors[$errorCode]);
+        } else {
+            $errorFile = '';
+            if (self::$app) {
+                $errorFile = self::$app->dir . 'public/' . $errorCode . '.html';
+            }
+            if ($errorFile && file_exists($errorFile)) {
+                include $errorFile;
+            } else {
+                $title = 'Error: ' . $errorCode . ' - ' . $errors[$errorCode];
+                echo '<!doctype html><meta charset=utf-8><title>' . $title . '</title><body style="font-family: monospace;"><p style="font-size: 1.3em; margin-top: 4em; text-align: center;">' . $title . '</p>' . PHP_EOL;
+            }
+        }
+
+        if ($msg) echo $prefix . ' Error: ' . $msg . $suffix;
+        if (self::$debug) {
+            if ($debugText) echo $prefix . ' Error: ' . $debugText . $suffix;
+
+            $backtrace = debug_backtrace();
+            foreach ($backtrace as $trace)
+                if (isset($trace['file']) && isset($trace['file']))
+                    echo $prefix . $trace['file'] . ':' . $trace['line'] . $suffix;
+
+            echo $prefix . ' ' . $debugText . $suffix;
+        }
+        exit();
+
     }
 
 }

@@ -66,7 +66,7 @@ class Session implements \SessionHandlerInterface {
     public function read($sessionId) {
         $sessionData = '';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT sessionData
             FROM $this->tableName
@@ -86,7 +86,7 @@ class Session implements \SessionHandlerInterface {
     public function write($sessionId, $sessionData) {
         $sessionId = filter_var($sessionId, FILTER_SANITIZE_STRING);
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             INSERT INTO $this->tableName (
                 _geUserSessionId,
@@ -120,7 +120,7 @@ class Session implements \SessionHandlerInterface {
     }
 
     public function destroy($sessionId) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tableName
             WHERE _geUserSessionId = ?
@@ -132,7 +132,7 @@ class Session implements \SessionHandlerInterface {
     }
 
     public function gc($maxlifetime) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tableName
             WHERE

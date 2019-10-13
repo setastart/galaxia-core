@@ -34,9 +34,9 @@ const PROTO_IMAGE = [
 
 
 
-function gImageList($dirImages) {
+function gImageList($dirImage) {
     $images = [];
-    $glob = glob($dirImages . '*', GLOB_NOSORT);
+    $glob = glob($dirImage . '*', GLOB_NOSORT);
     if ($glob === false) return $images;
     foreach ($glob as $filename) {
         if (!is_dir($filename)) continue;
@@ -49,8 +49,8 @@ function gImageList($dirImages) {
 
 
 
-function gImageDimensions(string $dirImages, string $imgSlug) {
-    $file = $dirImages . $imgSlug . '/' . $imgSlug . '_dim.txt';
+function gImageDimensions(string $dirImage, string $imgSlug) {
+    $file = $dirImage . $imgSlug . '/' . $imgSlug . '_dim.txt';
     if (!file_exists($file)) return;
     $dim = explode('x', file_get_contents($file));
     if ($dim) return [(int)$dim[0], (int)$dim[1]];
@@ -87,11 +87,11 @@ function gImagePrepare(&$imagick) {
 
 
 
-function gImageGetResizes(string $dirImages, string $imgSlug) {
+function gImageGetResizes(string $dirImage, string $imgSlug) {
     $files = [];
     $resizes = [];
-    $dirImages = $dirImages . $imgSlug;
-    $glob = glob($dirImages . '/*');
+    $dirImage = $dirImage . $imgSlug;
+    $glob = glob($dirImage . '/*');
     if($glob === false) return $files;
     foreach ($glob as $filename) {
         if (!is_file($filename)) continue;
@@ -108,28 +108,28 @@ function gImageGetResizes(string $dirImages, string $imgSlug) {
 
 
 
-function gImageDeleteResizes(string $dirImages, string $imgSlug) {
-    $resizes = gImageGetResizes($dirImages, $imgSlug);
-    $mtime = filemtime($dirImages . $imgSlug . '/');
+function gImageDeleteResizes(string $dirImage, string $imgSlug) {
+    $resizes = gImageGetResizes($dirImage, $imgSlug);
+    $mtime = filemtime($dirImage . $imgSlug . '/');
 
     foreach ($resizes as $file) {
-        if (!unlink($dirImages . $imgSlug . '/' . $file)) {
+        if (!unlink($dirImage . $imgSlug . '/' . $file)) {
             error('Error removing resized image: ' . h($imgSlug));
         }
     }
 
-    if ($mtime !== false) touch($dirImages . $imgSlug . '/', $mtime);
+    if ($mtime !== false) touch($dirImage . $imgSlug . '/', $mtime);
     return count($resizes);
 }
 
 
 
 
-function gImageSlugRename(string $dirImages, string $imgSlugOld, $imgSlugNew) {
-    if (!gImageValid($dirImages, $imgSlugOld)) return false;
+function gImageSlugRename(string $dirImage, string $imgSlugOld, $imgSlugNew) {
+    if (!gImageValid($dirImage, $imgSlugOld)) return false;
 
-    $dirOld  = $dirImages . $imgSlugOld . '/';
-    $dirNew  = $dirImages . $imgSlugNew . '/';
+    $dirOld  = $dirImage . $imgSlugOld . '/';
+    $dirNew  = $dirImage . $imgSlugNew . '/';
     $mtime = filemtime($dirOld);
 
     if (!rename($dirOld, $dirNew)) {
@@ -160,13 +160,13 @@ function gImageSlugRename(string $dirImages, string $imgSlugOld, $imgSlugNew) {
 
 
 
-function gImageValid(string $dirImages, string $imgSlug) {
+function gImageValid(string $dirImage, string $imgSlug) {
     if (empty($imgSlug)) return false;
     if (preg_match('/[^a-z0-9-]/', $imgSlug)) return false;
-    if (realpath($dirImages) == realpath($dirImages . $imgSlug)) return false;
-    if (!is_dir($dirImages . $imgSlug)) return false;
+    if (realpath($dirImage) == realpath($dirImage . $imgSlug)) return false;
+    if (!is_dir($dirImage . $imgSlug)) return false;
 
-    $fileBase = $dirImages . $imgSlug . '/' . $imgSlug;
+    $fileBase = $dirImage . $imgSlug . '/' . $imgSlug;
     if (file_exists($fileBase . '.jpg')) return '.jpg';
     if (file_exists($fileBase . '.png')) return '.png';
     return false;
@@ -175,14 +175,14 @@ function gImageValid(string $dirImages, string $imgSlug) {
 
 
 
-function gImageDelete(string $dirImages, string $imgSlug) {
-    if (!gImageValid($dirImages, $imgSlug)) return false;
+function gImageDelete(string $dirImage, string $imgSlug) {
+    if (!gImageValid($dirImage, $imgSlug)) return false;
 
-    foreach (new DirectoryIterator($dirImages . $imgSlug) as $fileInfo) {
+    foreach (new DirectoryIterator($dirImage . $imgSlug) as $fileInfo) {
         if ($fileInfo->isDot()) continue;
         unlink($fileInfo->getPathname());
     }
-    rmdir($dirImages . $imgSlug);
+    rmdir($dirImage . $imgSlug);
     return true;
 }
 

@@ -26,7 +26,7 @@ class Authentication {
     private $cryptoNrOfBytes = 16;
 
 
-    function __construct($tableNamePrefix) {
+    function __construct(string $tableNamePrefix = '_geUser') {
         $this->tblUser                     = $tableNamePrefix;
         $this->tblUserOption               = $tableNamePrefix . 'Option';
         $this->tblUserPasswordResetRequest = $tableNamePrefix . 'PasswordResetRequest';
@@ -42,7 +42,7 @@ class Authentication {
 
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             INSERT INTO $this->tblUser (
                 name,
@@ -66,7 +66,7 @@ class Authentication {
         if (!$email || !$password) return false;
         $passwordHash = '';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT passwordHash
             FROM $this->tblUser
@@ -88,7 +88,7 @@ class Authentication {
         if (!$userId || !$password) return false;
         $passwordHash = '';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT passwordHash
             FROM $this->tblUser
@@ -110,7 +110,7 @@ class Authentication {
         if (!$email) return false;
         $userId = 0;
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT _geUserId
             FROM $this->tblUser
@@ -132,7 +132,7 @@ class Authentication {
         if (!$email) return false;
         $userId = 0;
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT _geUserId
             FROM $this->tblUser
@@ -154,7 +154,7 @@ class Authentication {
 
     function registerRequest($name, $email, $password) {
         // first, delete all previous verifications but leave the last 5
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tblUserRegisterRequest
             WHERE email = ? AND token NOT IN (
@@ -195,7 +195,7 @@ class Authentication {
 
 
     function registerValid($email, $token) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT 1
             FROM $this->tblUserRegisterRequest
@@ -215,7 +215,7 @@ class Authentication {
 
 
     function registerFinish($email, $lang) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             INSERT INTO $this->tblUser (
                 name,
@@ -258,7 +258,7 @@ class Authentication {
 
 
     function registerDeleteRequests($email) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tblUserRegisterRequest
             WHERE email = ?
@@ -274,7 +274,7 @@ class Authentication {
     // recover account / password reset
 
     function passwordResetRequest($email) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tblUserPasswordResetRequest
             WHERE email = ?
@@ -303,7 +303,7 @@ class Authentication {
 
 
     function passwordResetValid($email, $token) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT token
             FROM $this->tblUserPasswordResetRequest
@@ -328,7 +328,7 @@ class Authentication {
 
     function passwordResetFinish($email, $password) {
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             UPDATE $this->tblUser
             SET passwordHash = ?
@@ -351,7 +351,7 @@ class Authentication {
 
 
     function passwordResetDeleteRequests($email) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tblUserPasswordResetRequest
             WHERE email = ?
@@ -369,7 +369,7 @@ class Authentication {
     function emailChangeRequest($userId, $emailNew) {
 
         // first, delete all previous verifications
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tblUserEmailChangeRequest
             WHERE _geUserId = ?
@@ -402,7 +402,7 @@ class Authentication {
         if (!$userId) return false;
         $emailNew = '';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT emailNew
             FROM $this->tblUserEmailChangeRequest
@@ -425,7 +425,7 @@ class Authentication {
     function emailChangeValid($userId, $token) {
         if (!$userId || !$token) return false;
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT token
             FROM $this->tblUserEmailChangeRequest
@@ -451,7 +451,7 @@ class Authentication {
     function emailChangeFinish($userId, $oldEmail, $token) {
         if (!$userId || !$oldEmail || !$token) return false;
         $emailNew = '';
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT emailNew
             FROM $this->tblUserEmailChangeRequest
@@ -492,7 +492,7 @@ class Authentication {
 
 
     function emailChangeDeleteRequests($userId) {
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             DELETE FROM $this->tblUserEmailChangeRequest
             WHERE _geUserId = ?
@@ -508,7 +508,7 @@ class Authentication {
     function passwordChange($userId, $password) {
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             UPDATE $this->tblUser
             SET passwordHash = ?

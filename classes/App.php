@@ -25,9 +25,10 @@ class App {
     public $dirLogic  = '';
     public $dirModel  = '';
     public $dirView   = '';
-    public $dirImages = '';
     public $dirLog    = '';
     public $dirCache  = '';
+    public $dirImage  = '';
+    public $urlImages = '/media/image/';
 
     public $requestUri = '';
     public $requestUriNormalized = '';
@@ -57,27 +58,31 @@ class App {
     public $cookieDebugKey = 'debug';
     public $cookieDebugVal = '';
 
+    public $mysqlHost = '127.0.0.1';
+    public $mysqlDb   = '';
+    public $mysqlUser = '';
+    public $mysqlPass = '';
+
     public $imageCompressionQuality = 90;
 
 
     public function __construct(string $dir) {
-        if (!$dir) errorPage(500, 'app initialization 1');
-        if (!is_dir($dir)) errorPage(500, 'app initialization 2');
-        if (!file_exists($dir . '/config/app.php')) errorPage(500, 'app configuration');
-
         $this->dir = rtrim($dir, '/') . '/';
-        $this->dirLayout = $this->dir . 'src/layouts/';
-        $this->dirLogic  = $this->dir . 'src/templates/';
-        $this->dirModel  = $this->dir . 'src/models/';
-        $this->dirView   = $this->dir . 'src/templates/';
+        $this->dirLayout = $this->dir . 'src/layout/';
+        $this->dirLogic  = $this->dir . 'src/template/';
+        $this->dirModel  = $this->dir . 'src/model/';
+        $this->dirView   = $this->dir . 'src/template/';
         $this->dirCache  = $this->dir . 'var/cache/';
         $this->dirLog    = $this->dir . 'var/log/';
-        $this->dirImages = $this->dir . 'var/media/images/';
+        $this->dirImage  = $this->dir . 'var/media/image/';
 
         require $this->dir . 'config/app.php';
 
         if (file_exists($this->dir . 'config/cookies.php'))
             include $this->dir . 'config/cookies.php';
+
+        if (file_exists($this->dir . 'config/mysql.php'))
+            include $this->dir . 'config/mysql.php';
 
         if (isset($_SERVER['REQUEST_URI'])) {
             $this->requestUri = urldecode($_SERVER['REQUEST_URI'] ?? '');
@@ -137,8 +142,8 @@ class App {
     function loadPagesById() {
         if ($this->pagesById == null) {
             $this->pagesById = $this->cacheGet('app', 1, 'routing', 'pages', 'byId', function() {
-                $app = \Galaxia\Director::app();
-                $db = \Galaxia\Director::mysql();
+                $app = \Galaxia\Director::getApp();
+                $db = \Galaxia\Director::getMysqli();
                 $pagesById = [];
                 $query = querySelect(['page' => ['pageId', 'pageStatus', 'pageSlug_', 'pageTitle_', 'pageType']], $app->langs);
                 $query .= 'WHERE pageStatus > 1' . PHP_EOL;
@@ -169,8 +174,8 @@ class App {
 
     function loadPagesByIdDraft() {
         $pagesByIdDraft = $this->cacheGet('app', 1, 'routing', 'draft', 'pagesByIdDraft', function() {
-            $app = \Galaxia\Director::app();
-            $db = \Galaxia\Director::mysql();
+            $app = \Galaxia\Director::getApp();
+            $db = \Galaxia\Director::getMysqli();
 
             $pagesByIdDraft = [];
             $query = querySelect(['page' => ['pageId', 'pageStatus', 'pageSlug_', 'pageTitle_', 'pageType']], $app->langs);
@@ -207,8 +212,8 @@ class App {
         Director::timerStart($timerName);
 
         $slugsAndRedirectsByType = $this->cacheGet('app', 1, 'routing', 'slugsAndRedirectsByType', $cachePostfix, function() use ($pageMinStatus) {
-            $app = Director::app();
-            $db = Director::mysql();
+            $app = Director::getApp();
+            $db = Director::getMysqli();
 
             $slugs = [];
             $redirects = [];
@@ -375,7 +380,7 @@ class App {
         $query .= querySelectWhereOr($arraySelectWhereOr, $statusGlue, $langs);
 
 
-        $db = \Galaxia\Director::mysql();
+        $db = \Galaxia\Director::getMysqli();
         $stmt = $db->prepare($query);
         $stmt->bind_param(implode(array_map('key', $params)), ...array_map('reset', $params));
         $stmt->execute();
@@ -548,8 +553,8 @@ class App {
     public function imageGet($imgSlug, $img = [], $resize = true) {
         $img = array_merge(PROTO_IMAGE, $img);
 
-        if (!$img['ext'] = gImageValid($this->dirImages, $imgSlug)) return;
-        $imgDir = $this->dirImages . $imgSlug . '/';
+        if (!$img['ext'] = gImageValid($this->dirImage, $imgSlug)) return;
+        $imgDir = $this->dirImage . $imgSlug . '/';
         $imgDirSlug = $imgDir . $imgSlug;
         $file = '';
 
@@ -606,7 +611,7 @@ class App {
         // ddp($img);
 
         $ratio = $img['w'] / $img['h'];
-        $img['name'] = '/media/images/' . $imgSlug . '/' . $imgSlug;
+        $img['name'] = $this->urlImages . $imgSlug . '/' . $imgSlug;
 
 
 
@@ -724,16 +729,16 @@ class App {
             // prepare directories
             $fileSlug = $fileSlugInitial = pathinfo($fileNameProposed, PATHINFO_FILENAME);
             $fileSlug = gFormatSlug($fileSlug);
-            $fileDir = $this->dirImages . $fileSlug . '/';
-            if (is_dir($this->dirImages . $fileSlug)) {
+            $fileDir = $this->dirImage . $fileSlug . '/';
+            if (is_dir($this->dirImage . $fileSlug)) {
                 if ($replace) {
                     $isReplaced = true;
-                    $mtime = filemtime($this->dirImages . $fileSlug . '/');
+                    $mtime = filemtime($this->dirImage . $fileSlug . '/');
                 } else {
                     for ($j = 0; $j < 3; $j++) {
-                        if (!is_dir($this->dirImages . $fileSlug)) break;
+                        if (!is_dir($this->dirImage . $fileSlug)) break;
                         $fileSlug = gFormatSlug('temp' . uniqid() . '-' . $fileSlugInitial);
-                        $fileDir = $this->dirImages . $fileSlug . '/';
+                        $fileDir = $this->dirImage . $fileSlug . '/';
                     }
                     if (!mkdir($fileDir)) {
                         error('Unable to create directory: ' . h($fileDir));
@@ -768,7 +773,7 @@ class App {
             if ($replace) {
                 if (file_exists($fileDir . $fileSlug . '.jpg')) unlink($fileDir . $fileSlug . '.jpg');
                 if (file_exists($fileDir . $fileSlug . '.png')) unlink($fileDir . $fileSlug . '.png');
-                gImageDeleteResizes($this->dirImages, $fileSlug);
+                gImageDeleteResizes($this->dirImage, $fileSlug);
             }
 
             try {
@@ -793,7 +798,7 @@ class App {
 
                 if ($mtime) {
                     touch($fileName, $mtime);
-                    touch($this->dirImages . $fileSlug . '/', $mtime);
+                    touch($this->dirImage . $fileSlug . '/', $mtime);
                 }
             } else {
                 info('Uploaded image: ' . h($fileSlug . $fileExt));

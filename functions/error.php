@@ -12,34 +12,7 @@
  - See the Licence for the specific language governing permissions and limitations under the Licence.
 */
 
-function errorPage(int $errorCode, string $msg = '') {
-    $errors = [
-        403 => 'Forbidden',
-        404 => 'Not Found',
-        500 => 'Internal Server Error',
-    ];
-    if (!in_array($errorCode, [403, 404, 500])) $errorCode = 500;
-    http_response_code($errorCode);
 
-    $errorFile = '';
-    if (isset($_SERVER['DOCUMENT_ROOT'])) {
-        $errorFile = $_SERVER['DOCUMENT_ROOT'] . '/' . $errorCode . '.html';
-    }
-    if ($errorFile && file_exists($errorFile)) {
-        include $errorFile;
-    } else {
-        $title = 'Error: ' . $errorCode . ' - ' . $errors[$errorCode];
-        echo '<!doctype html><meta charset=utf-8><title>' . $title . '</title><body style="font-family: monospace;"><p style="font-size: 1.3em; margin-top: 4em; text-align: center;">' . $title . '</p>' . PHP_EOL;
-    }
-
-    if ($msg) echo '<!-- Error: ' . $msg . ' -->' . PHP_EOL;
-    $includes = get_included_files();
-    foreach ($includes as $include) {
-        $include = preg_replace('~^' . dirname(dirname(dirname(__DIR__))) . '/~m', '', $include);
-        echo '<!-- ' . $include . ' -->' . PHP_EOL;
-    }
-    exit();
-}
 function redirect($location = '', int $code = 303) {
     $location = trim($location);
     if (headers_sent()) {
@@ -50,7 +23,6 @@ function redirect($location = '', int $code = 303) {
     header('Location: /' . $location, true, $code);
     exit();
 }
-
 
 
 

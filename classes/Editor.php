@@ -38,12 +38,10 @@ class Editor {
 
 
     public function __construct(string $dir) {
-        if (!$dir) errorPage(500, 'editor initialization 1');
-        if (!is_dir($dir)) errorPage(500, 'editor initialization 2');
         $this->dir = rtrim($dir, '/') . '/';
-        $this->dirLayout = $this->dir . 'src/layouts/';
-        $this->dirLogic  = $this->dir . 'src/templates/';
-        $this->dirView   = $this->dir . 'src/templates/';
+        $this->dirLayout = $this->dir . 'src/layout/';
+        $this->dirLogic  = $this->dir . 'src/template/';
+        $this->dirView   = $this->dir . 'src/template/';
     }
 
 }

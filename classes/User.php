@@ -15,7 +15,6 @@
 namespace Galaxia;
 
 
-
 class User {
 
     private $tableName;
@@ -100,7 +99,7 @@ class User {
         $timeLastOnline = '';
         $timeCreated = '';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT
                 _geUserId,
@@ -149,7 +148,7 @@ class User {
     public function setName($name) {
         if (!$this->loggedIn) return false;
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             UPDATE $this->tableName
             SET name = ?
@@ -169,7 +168,7 @@ class User {
         $optionValue = '';
         $optionsTableName = $this->tableName . 'Option';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             SELECT
                 fieldKey,
@@ -199,7 +198,7 @@ class User {
 
         $optionsTableName = $this->tableName . 'Option';
 
-        $db = Director::mysql();
+        $db = Director::getMysqli();
         $stmt = $db->prepare("
             INSERT INTO $optionsTableName (
                 _geUserId,
