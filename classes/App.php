@@ -78,8 +78,8 @@ class App {
 
         require $this->dir . 'config/app.php';
 
-        if (file_exists($this->dir . 'config/cookies.php'))
-            include $this->dir . 'config/cookies.php';
+        if (file_exists($this->dir . 'config/cookie.php'))
+            include $this->dir . 'config/cookie.php';
 
         if (file_exists($this->dir . 'config/mysql.php'))
             include $this->dir . 'config/mysql.php';

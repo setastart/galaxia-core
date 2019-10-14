@@ -91,7 +91,7 @@ class Director {
         if (self::$app)    self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
         if (!$dir)         self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
         if (!is_dir($dir)) self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' $dir is not a directory');
-        if (!file_exists($dir . '/config/app.php')) self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
+        if (!file_exists($dir . '/config/app.php')) self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
 
         libxml_use_internal_errors(true);
 
