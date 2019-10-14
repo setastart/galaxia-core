@@ -660,8 +660,8 @@ class App {
                     $imagickNew = clone($imagick);
 
 
-                    $lockFile = $this->dirCache . 'flocks/_img_' . $imgSlug . '_' . $multiW . '_' . $multiH . $img['ext'] . '.lock';
-                    if (is_dir($this->dirCache . 'flocks/') && $fp = fopen($lockFile, 'w')) {
+                    $lockFile = $this->dirCache . 'flock/_img_' . $imgSlug . '_' . $multiW . '_' . $multiH . $img['ext'] . '.lock';
+                    if (is_dir($this->dirCache . 'flock/') && $fp = fopen($lockFile, 'w')) {
                         $lockStatus = flock($fp, LOCK_EX | LOCK_NB, $wouldblock);
                         if ($wouldblock) {
                             flock($fp, LOCK_SH);
@@ -843,8 +843,8 @@ class App {
             $timerName = 'Cache ' . $cacheType . ': ' . $cacheName;
             \Galaxia\Director::timerStart($timerName);
 
-            $lockFile = $this->dirCache . 'flocks/' . $cacheName . '.lock';
-            if (is_dir($this->dirCache . 'flocks/') && !$bypass && $fp = fopen($lockFile, 'w')) {
+            $lockFile = $this->dirCache . 'flock/' . $cacheName . '.lock';
+            if (is_dir($this->dirCache . 'flock/') && !$bypass && $fp = fopen($lockFile, 'w')) {
                 $lockStatus = flock($fp, LOCK_EX | LOCK_NB, $wouldblock);
                 if ($wouldblock) {
                     flock($fp, LOCK_SH);
