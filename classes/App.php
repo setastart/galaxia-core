@@ -17,7 +17,6 @@ namespace Galaxia;
 class App {
 
     public $version   = '2019';
-    public $debug     = false;
     public $minStatus = 2;
 
     public $dir       = '';
@@ -38,6 +37,7 @@ class App {
     public $pageIsRoot = false;
     public $pagesById  = null;
     private $slugsAndRedirectsByType = null;
+    public $cacheBypassAll = false;
 
     public $logic  = '';
     public $view   = '';
@@ -78,11 +78,8 @@ class App {
 
         require $this->dir . 'config/app.php';
 
-        if (file_exists($this->dir . 'config/cookie.php'))
-            include $this->dir . 'config/cookie.php';
-
-        if (file_exists($this->dir . 'config/mysql.php'))
-            include $this->dir . 'config/mysql.php';
+        if (file_exists($this->dir . 'config/app.private.php'))
+            include $this->dir . 'config/app.private.php';
 
         if (isset($_SERVER['REQUEST_URI'])) {
             $this->requestUri = urldecode($_SERVER['REQUEST_URI'] ?? '');
@@ -95,13 +92,6 @@ class App {
 
 
     // locale
-
-    public function addLangPrefix(string $url, string $lang = null) {
-        $url = trim($url, '/');
-        if ($lang == null) $lang = key($this->locales);
-        if ($url == '') return $this->locales[$lang]['url'];
-        return h(rtrim($this->locales[$lang]['url'], '/') . '/' . $url);
-    }
 
     public function localeSetupFromUrl(): void {
         if (isset($_SERVER['REQUEST_URI'])) {
@@ -132,6 +122,13 @@ class App {
 
         setlocale(LC_TIME, $this->locale['long'] . '.UTF-8');
         date_default_timezone_set($this->timeZone);
+    }
+
+    public function addLangPrefix(string $url, string $lang = null) {
+        $url = trim($url, '/');
+        if ($lang == null) $lang = key($this->locales);
+        if ($url == '') return $this->locales[$lang]['url'];
+        return h(rtrim($this->locales[$lang]['url'], '/') . '/' . $url);
     }
 
 
@@ -534,6 +531,7 @@ class App {
                 devlog('Sitemap written with 0 bytes.');
                 return;
             }
+
             devlog(sprintf('Sitemap generated: %d items', $found) . ' <a target="blank" href="/sitemap.xml">' . t('Open in new tab') . '</a>');
         } else {
             devlog('Sitemap not generated, no items found.');
@@ -820,6 +818,8 @@ class App {
     // caching
 
     function cacheGet(string $scope, int $level, string $type, string $section, string $key, $function, bool $bypass = false) : array {
+        if ($this->cacheBypassAll) $bypass = true;
+
         $dir = $this->dirCache . 'app/';
         if ($scope == 'editor') $dir = $this->dirCache . 'editor/';
         if (!is_dir($dir)) mkdir($dir);

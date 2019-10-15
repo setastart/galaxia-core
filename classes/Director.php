@@ -194,10 +194,10 @@ class Director {
         self::timerStart('Translations');
 
         if (self::$editor && file_exists(self::$editor->dir . 'resource/stringTranslations.php'))
-            self::$translations = array_merge(self::$translations, include (self::$editor->dir . 'resource/stringTranslations.php'));
+            self::$translations = array_merge(self::$translations, include(self::$editor->dir . 'resource/stringTranslations.php'));
 
         if (self::$app && file_exists(self::$app->dir . 'resource/stringTranslations.php'))
-            self::$translations = array_merge(self::$translations, include (self::$app->dir . 'resource/stringTranslations.php'));
+            self::$translations = array_merge(self::$translations, include(self::$app->dir . 'resource/stringTranslations.php'));
 
         self::timerStop('Translations');
     }
