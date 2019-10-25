@@ -22,6 +22,7 @@ const ALLOWED_WHERE_LOGIC  = ['=', '<', '>', '<=', '>=', 'BETWEEN', 'IS NOT NULL
 
 function queryInsert($expression, $changes, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'INSERT INTO ' . q($firstTable) . ' (' . PHP_EOL;
@@ -51,6 +52,7 @@ function queryInsert($expression, $changes, array $langs = null) {
 
 function querySelect(array $expression, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = PHP_EOL . 'SELECT ' . PHP_EOL;
@@ -89,6 +91,7 @@ function querySelect(array $expression, array $langs = null) {
 
 function querySelectOne(array $expression, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'SELECT 1' . PHP_EOL . PHP_EOL;
@@ -99,6 +102,7 @@ function querySelectOne(array $expression, array $langs = null) {
 
 function querySelectFirst(array $expression, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
     $firstColumn = $expression[$firstTable][0];
 
@@ -113,12 +117,13 @@ function querySelectCount(string $param) {
 }
 
 
-function querySelectLeftJoinUsing(array $joins, array $langs = null) {
-    if (empty($joins)) return;
+function querySelectLeftJoinUsing(array $expression, array $langs = null) {
+    if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = '';
-    foreach ($joins as $table => $columns) {
+    foreach ($expression as $table => $columns) {
         $r .= 'LEFT JOIN ' . q($table) . ' USING (';
         foreach ($columns as $column) {
             $r .= q($column) . ', ';
@@ -131,6 +136,7 @@ function querySelectLeftJoinUsing(array $joins, array $langs = null) {
 
 function querySelectWhere(array $expression, array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'WHERE ' . PHP_EOL;
@@ -156,6 +162,7 @@ function querySelectWhere(array $expression, array $langs = null) {
 
 function querySelectWhereOr(array $expression, string $prefix = 'WHERE', array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = $prefix . ' (' . PHP_EOL;
@@ -181,6 +188,7 @@ function querySelectWhereOr(array $expression, string $prefix = 'WHERE', array $
 
 function querySelectWhereIn(array $expression, array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'WHERE ' . PHP_EOL;
@@ -196,6 +204,7 @@ function querySelectWhereIn(array $expression, array $langs = null) {
 
 function querySelectWhereAndIn(array $expression, array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'AND ' . PHP_EOL;
@@ -211,6 +220,7 @@ function querySelectWhereAndIn(array $expression, array $langs = null) {
 
 function querySelectGroupBy(array $expression, array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'GROUP BY' . PHP_EOL;
@@ -241,6 +251,7 @@ function querySelectGroupBy(array $expression, array $langs = null) {
 
 function querySelectOrderBy(array $expression, array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'ORDER BY' . PHP_EOL;
@@ -286,6 +297,7 @@ function querySelectLimit($offset, $count) {
 
 function queryUpdate(array $expression, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
     return 'UPDATE ' . q($firstTable) . PHP_EOL . PHP_EOL;
 }
@@ -301,6 +313,7 @@ function queryUpdateSet(array $params) {
 
 function queryUpdateWhere(array $expression, array $langs = null) {
     if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'WHERE ' . PHP_EOL;
@@ -323,6 +336,7 @@ function queryUpdateWhere(array $expression, array $langs = null) {
 
 function queryDelete($expression, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'DELETE FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;
@@ -354,6 +368,7 @@ function queryDeleteIn($table, $whereCols, $inCol, $ids) {
 
 function queryDeleteOrNull($expression, array $langs = null) {
     $firstTable = key($expression);
+    arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
 
     $r = 'DELETE FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;

@@ -21,7 +21,7 @@ const HTMLSPECIALCHARS_FLAGS = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5;
 
 
 function h($text, bool $condition = true) {
-    if ($condition) return htmlspecialchars($text, HTMLSPECIALCHARS_FLAGS);
+    if ($condition) return htmlspecialchars((string) $text, HTMLSPECIALCHARS_FLAGS);
 }
 
 function hg(array $arr, string $key, string $lang = '') {
@@ -249,7 +249,7 @@ function t($text, $lang = null) {
 
 
 // put SQL query quotes around table and field names
-function q(string $text) {
+function q($text) {
     return '`' . str_replace('`', '``', h($text)) . '`';
 }
 

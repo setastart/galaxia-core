@@ -31,7 +31,8 @@ class App {
 
     public $requestUri = '';
     public $requestUriNormalized = '';
-    public $routes = [];
+    public $routes    = [];
+    public $routeVars = [];
 
     public $pageId     = 0;
     public $pageIsRoot = false;
@@ -124,9 +125,9 @@ class App {
         date_default_timezone_set($this->timeZone);
     }
 
-    public function addLangPrefix(string $url, string $lang = null) {
+    public function addLangPrefix(string $url, string $lang = '') {
         $url = trim($url, '/');
-        if ($lang == null) $lang = key($this->locales);
+        if (!isset($this->locales[$lang])) $lang = $this->lang;
         if ($url == '') return $this->locales[$lang]['url'];
         return h(rtrim($this->locales[$lang]['url'], '/') . '/' . $url);
     }
@@ -817,7 +818,7 @@ class App {
 
     // caching
 
-    function cacheGet(string $scope, int $level, string $type, string $section, string $key, $function, bool $bypass = false) : array {
+    function cacheGet(string $scope, int $level, string $type, string $section, string $key, $function, bool $bypass = false): array {
         if ($this->cacheBypassAll) $bypass = true;
 
         $dir = $this->dirCache . 'app/';

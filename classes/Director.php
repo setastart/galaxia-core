@@ -19,9 +19,9 @@ use Galaxia\{App, Editor, User};
 
 class Director {
 
-    private static $app    = null;
-    private static $editor = null;
-    private static $me     = null;
+    private static $app     = null;
+    private static $editor  = null;
+    private static $me      = null;
     private static $mysqli  = null;
 
     static $transliterator      = null;
@@ -53,12 +53,13 @@ class Director {
 
 
 
-    static function init(string $dir) : App {
+    static function init(string $dir): App {
         register_shutdown_function('\Galaxia\Director::onShutdown');
 
         if (self::$app)    self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
         if (!$dir)         self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
         if (!is_dir($dir)) self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' $dir is not a directory');
+        if (file_exists($dir . '/config/const.php')) include $dir . '/config/const.php';
         if (!file_exists($dir . '/config/app.php')) self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
 
         header('Content-Type: text/html; charset=utf-8');
@@ -68,6 +69,7 @@ class Director {
         libxml_use_internal_errors(true);
 
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')) self::$ajax = true;
+
 
         $app = new App($dir);
 
@@ -85,7 +87,7 @@ class Director {
 
 
 
-    static function initCLI(string $dir) : App {
+    static function initCLI(string $dir): App {
         register_shutdown_function('\Galaxia\Director::onShutdownCLI');
 
         if (self::$app)    self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
@@ -107,7 +109,7 @@ class Director {
 
 
 
-    static function initEditor(string $dir) : Editor {
+    static function initEditor(string $dir): Editor {
         if (!self::$app)   self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         if (self::$editor) self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' Editor was already initialized');
         if (!$dir)         self::errorPageAndExit(500, 'Director editor initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
@@ -121,7 +123,7 @@ class Director {
 
 
 
-    static function initMe() : User {
+    static function initMe(): User {
         if (!self::$app) self::errorPageAndExit(500, 'Director user initialization', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         if (self::$me)   self::errorPageAndExit(500, 'Director user initialization', __METHOD__ . ':' . __LINE__ . ' User was already initialized');
         $me = new User('_geUser');
@@ -141,7 +143,7 @@ class Director {
 
 
 
-    static function getApp() : App {
+    static function getApp(): App {
         if (!self::$app) self::errorPageAndExit(500, 'Director app', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         return self::$app;
     }
@@ -149,7 +151,7 @@ class Director {
 
 
 
-    static function editor() : Editor {
+    static function editor(): Editor {
         if (!self::$app)    self::errorPageAndExit(500, 'Director editor', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         if (!self::$editor) self::errorPageAndExit(500, 'Director editor', __METHOD__ . ':' . __LINE__ . ' Editor was not initialized');
         return self::$editor;
@@ -158,7 +160,7 @@ class Director {
 
 
 
-    static function getMe($userTable) : User {
+    static function getMe($userTable): User {
         if (!self::$app) self::errorPageAndExit(500, 'Director me', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         if (!self::$me)  self::errorPageAndExit(500, 'Director me', __METHOD__ . ':' . __LINE__ . ' User was not initialized');
         return self::$me;
@@ -167,7 +169,7 @@ class Director {
 
 
 
-    static function getMysqli() : mysqli {
+    static function getMysqli(): mysqli {
         if (!self::$app) self::errorPageAndExit(500, 'Director db', __METHOD__ . ':' . __LINE__ . ' App was not initialized');
         if (!self::$mysqli) {
             self::timerStart('DB Connection');
@@ -178,28 +180,13 @@ class Director {
             }
             if (self::$debug) mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-            self::$mysqli->set_charset('utf8mb4');
+            // self::$mysqli->set_charset('utf8mb4');
             self::$mysqli->query('SET time_zone = ' . q(self::$app->timeZone) . ';');
             self::$mysqli->query('SET lc_time_names = ' . q(self::$app->locale['long']) . ';');
 
             self::timerStop('DB Connection');
         };
         return self::$mysqli;
-    }
-
-
-
-
-    static function loadTranslations() {
-        self::timerStart('Translations');
-
-        if (self::$editor && file_exists(self::$editor->dir . 'resource/stringTranslations.php'))
-            self::$translations = array_merge(self::$translations, include(self::$editor->dir . 'resource/stringTranslations.php'));
-
-        if (self::$app && file_exists(self::$app->dir . 'resource/stringTranslations.php'))
-            self::$translations = array_merge(self::$translations, include(self::$app->dir . 'resource/stringTranslations.php'));
-
-        self::timerStop('Translations');
     }
 
 
@@ -237,6 +224,21 @@ class Director {
             );
         }
         return self::$intlDateFormatters[$pattern][$lang];
+    }
+
+
+
+
+    static function loadTranslations() {
+        self::timerStart('Translations');
+
+        if (self::$editor && file_exists(self::$editor->dir . 'resource/stringTranslations.php'))
+            self::$translations = array_merge(self::$translations, include(self::$editor->dir . 'resource/stringTranslations.php'));
+
+        if (self::$app && file_exists(self::$app->dir . 'resource/stringTranslations.php'))
+            self::$translations = array_merge(self::$translations, include(self::$app->dir . 'resource/stringTranslations.php'));
+
+        self::timerStop('Translations');
     }
 
 

@@ -24,9 +24,9 @@ function array_splice_preserve_keys(&$input, $offset, $length = null, $replaceme
         return array_splice($input, $offset, $length);
     }
 
-    $part_before  = array_slice($input, 0, $offset, $preserve_keys=true);
-    $part_removed = array_slice($input, $offset, $length, $preserve_keys=true);
-    $part_after   = array_slice($input, $offset+$length, null, $preserve_keys=true);
+    $part_before  = array_slice($input, 0, $offset, $preserve_keys = true);
+    $part_removed = array_slice($input, $offset, $length, $preserve_keys = true);
+    $part_after   = array_slice($input, $offset + $length, null, $preserve_keys = true);
 
     $input = $part_before + $replacement + $part_after;
 
@@ -46,6 +46,83 @@ function array_map_recursive(callable $func, array $arr) {
 
 
 
+function arrayRemovePermsRecursive(array &$arr, array $perms = []) {
+    foreach ($arr as $subKey => $subVal) {
+        if (is_array($subVal)) {
+            if (isset($subVal['gcPerms']) && is_array($subVal['gcPerms'])) {
+                $foundPerms = array_intersect($subVal['gcPerms'], $perms);
+                if (!$foundPerms) {
+                    $arr[$subKey] = [];
+                    continue;
+                }
+                $arr[$subKey]['gcPerms'] = $foundPerms;
+            }
+            arrayRemovePermsRecursive($arr[$subKey], $perms);
+        }
+    }
+}
+
+
+
+
+function arrayReplaceHashtagWithParentName(&$arr, $parent = '') {
+    if (!is_array($arr)) return;
+    if (empty($arr)) return;
+    if (!$parent) {
+        $parentNew = key($arr);
+        if (is_string($parentNew) && !empty($parentNew)) {
+            if (substr($parentNew, 0, 1) != '#') $parent = $parentNew;
+        }
+    }
+
+    $count = count($arr);
+    for ($i = 0; $i < $count; $i++) {
+        $subKey = key(array_slice($arr, $i, 1, true));
+        if ($subKey === null) continue;
+        $subVal = $arr[$subKey];
+
+        $parentNew = $parent;
+
+        if (is_string($subVal)) {
+            if (substr($subKey, 0, 1) == '#' && substr($subVal, 0, 1) == '#') {
+                if ($parent) {
+                    array_splice_preserve_keys($arr, $i, 1, [$parent . substr($subKey, 1) => $parent . substr($subVal, 1)]);
+                }
+            } else if (substr($subKey, 0, 1) == '#') {
+                if ($parent) {
+                    array_splice_preserve_keys($arr, $i, 1, [$parent . substr($subKey, 1) => $subVal]);
+                }
+            } else if (substr($subVal, 0, 1) == '#') {
+                if ($parent) {
+                    $arr[$subKey] = $parent . substr($subVal, 1);
+                } else if (is_string($subKey) && substr($subKey, 0, 1) != '#') {
+                    $arr[$subKey] = $subKey . substr($subVal, 1);
+                }
+            }
+
+        } else if (is_array($subVal)) {
+            if (is_string($subKey) && !empty($subKey)) {
+                if (substr($subKey, 0, 1) == '#') {
+                    if ($parent) {
+                        $subKeyNew = $parent . substr($subKey, 1);
+                        array_splice_preserve_keys($arr, $i, 1, [$subKeyNew => $subVal]);
+                        $subKey = $subKeyNew;
+                    } else {
+                    }
+                } else {
+                    $parentNew = $subKey;
+                }
+            } else {
+                $parentNew = '';
+            }
+            arrayReplaceHashtagWithParentName($arr[$subKey], $parentNew);
+        }
+    }
+}
+
+
+
+
 /**
  * Walk array recursively, making keys and values multilingual.
  * Also remove elements for which the user doesn't have permissions
@@ -58,34 +135,43 @@ function arrayLanguifyRemovePerms(&$arr, $langs, $perms = []) {
 
     $count = count($arr);
     for ($i = $count - 1; $i >= 0; $i--) {
-        $subArr = array_slice($arr, $i, 1, true);
-        $subKey = key($subArr);
-        $subVal = $subArr[$subKey];
+        $subKey = key(array_slice($arr, $i, 1, true));
+        $subVal = $arr[$subKey];
 
-        // languify keys with arrays
-        if (is_array($arr[$subKey])) {
+        if (is_string($subVal)) {
 
-            // empty element that doesn't match permission
-            if (isset($arr[$subKey]['gcPerms']) && is_array($arr[$subKey]['gcPerms'])) {
-                $foundPerms = array_intersect($arr[$subKey]['gcPerms'], $perms);
-                if (!$foundPerms) {
-                    // unset($arr[$subKey]);
-                    $arr[$subKey] = [];
-                    continue;
+            // languify keys with values
+            if (substr($subKey, -1) == '_') {
+                $j = $i;
+                $subItemNew = [];
+                foreach ($langs as $lang) {
+                    $subItemNew[$subKey . $lang] = $subVal;
+                    $length = ($i == $j) ? 1 : 0;
+                    array_splice_preserve_keys($arr, $j, $length, $subItemNew);
+                    $j++;
                 }
 
-                $arr[$subKey]['gcPerms'] = $foundPerms;
+            // languify values in arrays
+            } else if (substr($subVal, -1) == '_') {
+                $subItemNew = [];
+                foreach ($langs as $lang)
+                    $subItemNew[] = $subVal . $lang;
+
+                if (is_int($subKey)) {
+                    array_splice($arr, $i, 1, $subItemNew);
+                } else if (is_string($subKey)) {
+                    $arr[$subKey] = $subItemNew;
+                }
             }
 
-            arrayLanguifyRemovePerms($arr[$subKey], $langs, $perms);
+        } else if (is_array($subVal)) {
 
+            // languify keys with arrays
             if (substr($subKey, -1) == '_') {
-
                 $j = $i;
                 foreach ($langs as $lang) {
-
-                    foreach ($subVal as $key => &$val)
-                        if (is_string($val) && substr($val, -1) == '_') $val .= $lang;
+                    // foreach ($subVal as $key => &$val)
+                    //     if (is_string($val) && substr($val, -1) == '_') $val .= $lang;
 
                     $subItemNew = [$subKey . $lang => array_merge($subVal, [
                         'lang' => $lang,
@@ -95,39 +181,11 @@ function arrayLanguifyRemovePerms(&$arr, $langs, $perms = []) {
                     $length = ($i == $j) ? 1 : 0;
                     array_splice_preserve_keys($arr, $j, $length, $subItemNew);
                     $j++;
-
                 }
-                // d($arr[$subKey], $i, $subItemNew, $subArr, $subKey, $subVal);
+            } else {
+                arrayLanguifyRemovePerms($arr[$subKey], $langs, $perms);
             }
 
-            continue;
-        }
-
-
-        // languify keys with values
-        if (substr($subKey, -1) == '_') {
-            $j = $i;
-            $subItemNew = [];
-            foreach ($langs as $lang) {
-                $subItemNew[$subKey . $lang] = $subVal;
-                $length = ($i == $j) ? 1 : 0;
-                array_splice_preserve_keys($arr, $j, $length, $subItemNew);
-                $j++;
-            }
-        }
-
-
-        // languify values in arrays
-        if (is_string($subVal) && substr($subVal, -1) == '_') {
-            $subItemNew = [];
-            foreach ($langs as $lang)
-                $subItemNew[] = $subVal . $lang;
-
-            if (is_int($subKey)) {
-                array_splice($arr, $subKey, 1, $subItemNew);
-            } else if (is_string($subKey)) {
-                $arr[$subKey] = $subItemNew;
-            }
         }
     }
 }
