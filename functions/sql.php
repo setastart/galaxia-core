@@ -71,6 +71,9 @@ function querySelect(array $expression, array $langs = null) {
             if (!is_int($column) && in_array($mod, ALLOWED_MODS)) {
                 $r .= '    ' . $mod . '(' . q($table) . '.' . q($column) . ') AS ' . q($column . $mod) . ', ' . PHP_EOL;
                 continue;
+            } else if (substr($mod, 0, 3) == 'AS ') {
+                $r .= '    ' . q($table) . '.' . q($column) . ' AS ' . q(substr($mod, 3)) . ', ' . PHP_EOL;
+                continue;
             }
 
             $column = $mod;
