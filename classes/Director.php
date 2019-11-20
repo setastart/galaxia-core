@@ -179,7 +179,7 @@ class Director {
             }
             if (self::$debug) mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-            // self::$mysqli->set_charset('utf8mb4');
+            self::$mysqli->set_charset('utf8mb4');
             self::$mysqli->query('SET time_zone = ' . q(self::$app->timeZone) . ';');
             self::$mysqli->query('SET lc_time_names = ' . q(self::$app->locale['long']) . ';');
 
