@@ -88,11 +88,10 @@ class Director {
 
 
     static function initCLI(string $dir): App {
-        register_shutdown_function('\Galaxia\Director::onShutdownCLI');
-
         if (self::$app)    self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
         if (!$dir)         self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
         if (!is_dir($dir)) self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' $dir is not a directory');
+        if (file_exists($dir . '/config/const.php')) include $dir . '/config/const.php';
         if (!file_exists($dir . '/config/app.php')) self::errorPageAndExit(500, 'Director app CLI initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
 
         libxml_use_internal_errors(true);
@@ -134,7 +133,7 @@ class Director {
 
 
 
-    private static function debugEnable() {
+    static function debugEnable() {
         self::$debug = true;
         ini_set('display_errors', '1');
         error_reporting(E_ALL);
