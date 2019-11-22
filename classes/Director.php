@@ -421,6 +421,7 @@ class Director {
             404 => 'Not Found',
             500 => 'Internal Server Error',
         ];
+
         if (!in_array($errorCode, [403, 404, 500])) $errorCode = 500;
         http_response_code($errorCode);
 
@@ -433,9 +434,20 @@ class Director {
         } else {
             $errorFile = '';
             if (self::$app) {
-                $errorFile = self::$app->dir . 'public/' . $errorCode . '.html';
+                $errorFilesToCheck = [];
+                foreach (self::$app->langs as $lang) {
+                    $errorFilesToCheck[] = self::$app->dir . 'public/error/' . $errorCode . '-' . $lang . '.html';
+                }
+                $errorFilesToCheck[] = self::$app->dir . 'public/' . $errorCode . '.html';
+
+                foreach ($errorFilesToCheck as $errorFileToCheck) {
+                    if (file_exists($errorFileToCheck)) {
+                        $errorFile = $errorFileToCheck;
+                        break;
+                    }
+                }
             }
-            if ($errorFile && file_exists($errorFile)) {
+            if ($errorFile) {
                 include $errorFile;
             } else {
                 $title = 'Error: ' . $errorCode . ' - ' . $errors[$errorCode];
