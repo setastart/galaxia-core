@@ -24,6 +24,7 @@ class Director {
     private static $me      = null;
     private static $mysqli  = null;
 
+
     static $transliterator      = null;
     static $transliteratorLower = null;
     static $intlDateFormatters  = [];
@@ -43,7 +44,8 @@ class Director {
         'ogImage' => '',
     ];
 
-    // debug
+    // dev and debug
+    static $dev = false;
     static $debug = false;
     private static $timers      = [];
     private static $timerLevel  = 0;
@@ -55,6 +57,8 @@ class Director {
 
     static function init(string $dir): App {
         register_shutdown_function('\Galaxia\Director::onShutdown');
+
+        if (getenv('GALAXIA_ENV') == 'development') self::$dev = true;
 
         if (self::$app)    self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' App was already initialized');
         if (!$dir)         self::errorPageAndExit(500, 'Director app initialization', __METHOD__ . ':' . __LINE__ . ' $dir is empty');
