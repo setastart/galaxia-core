@@ -321,7 +321,7 @@ class Director {
 
             if ($time['level'] > 0) {
                 $divisor = $levelTotals[$time['level'] - 1];
-                if ($divisor == 0) $divisor = 1;;
+                if ($divisor == 0) $divisor = 1;
                 $percentOfParent = (($time['total'] * 100) / $divisor);
                 $percentOfParent = number_format($percentOfParent, 0, '.', ' ');
             }
@@ -370,7 +370,7 @@ class Director {
     // shutdown functions
 
     static function onShutdown() {
-        Director::timerPrint(true, true);
+        // Director::timerPrint(true, true);
     }
 
     static function onShutdownCLI() {

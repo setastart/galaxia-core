@@ -1,5 +1,5 @@
 <?php
-/* Copyright 2017-2019 Ino Detelić
+/* Copyright 2017-2020 Ino Detelić
 
  - Licensed under the EUPL, Version 1.2 only (the "Licence");
  - You may not use this work except in compliance with the Licence.
@@ -14,6 +14,18 @@
 
 function strvalIfNotNull($value) {
     if ($value !== null) return strval($value);
+}
+
+
+
+
+if (!function_exists('array_key_first')) {
+    function array_key_first(array $arr) {
+        foreach($arr as $key => $unused) {
+            return $key;
+        }
+        return NULL;
+    }
 }
 
 

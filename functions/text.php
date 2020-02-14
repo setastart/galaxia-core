@@ -1,5 +1,5 @@
 <?php
-/* Copyright 2017-2019 Ino Detelić
+/* Copyright 2017-2020 Ino Detelić
 
  - Licensed under the EUPL, Version 1.2 only (the "Licence");
  - You may not use this work except in compliance with the Licence.
@@ -91,6 +91,10 @@ function st(string $text, int $h1 = 0, int $f1 = 0, int $f2 = 0) {
     // $f2 ads class="$f2" to <h2>. If set to 0, it is $h1 + 1
     if ($f1 == 0) $f1 = $h1;
     if ($f2 == 0) $f2 = $f1 + 1;
+    if ($f1 == 7) $f1 = 'p';
+    if ($f2 == 7) $f2 = 'p';
+    if ($f1 == 8) $f1 = 's';
+    if ($f2 == 8) $f2 = 's';
     $text = str_replace('<h2>' , '<h'  . ($h1 + 1) . ' class="t t2 f' . $f2 . '">', $text);
     $text = str_replace('</h2>', '</h' . ($h1 + 1) . '>', $text);
 
@@ -128,6 +132,96 @@ function stg(array $arr, string $key, int $h1 = 0, int $f1 = 0, int $f2 = 0, str
                 if (!is_string($arr[$key][$lang])) continue;
                 if (empty($arr[$key][$lang])) continue;
                 $text = st($arr[$key][$lang], $h1, $f1, $f2);
+                break;
+            }
+            break;
+    }
+
+    if ($text !== '0' && empty($text)) return null;
+    return $text;
+}
+
+
+
+
+function stp(string $text, int $f1 = 0, int $f2 = 0, int $fp) {
+    if (empty($text)) return '';
+    $text = trim(strip_tags($text, ALLOWED_TAGS));
+    if (empty($text)) return '';
+
+    // add target="_blank" rel="noopener" to outgoing links
+    $host = explode('.', $_SERVER['HTTP_HOST']);
+    $host = implode('\.', $host);
+    $re = '~<a href="https?(?!://' . $host . '/)://([^:/\s">]+)~m';
+    $subst = '<a target="_blank" rel="noopener nofollow" href="http';
+
+    $text = preg_replace_callback($re, function($matches) {
+        $inject = 'target="_blank" rel="noopener';
+        if (nofollowHost($matches[1])) $inject .= ' nofollow';
+
+        return '<a ' . $inject . '"' . substr($matches[0], 2);
+    }, $text);
+
+    // Header modification for <h1> and <h2>
+    // $h1 changes the start numbering of the <h1>. If set to 0, disable header modification.
+    // <h2> is $h1 + 1.
+    // $f1 ads class="$f1" to <h1>. If set to 0, it is $h1
+    // $f2 ads class="$f2" to <h2>. If set to 0, it is $h1 + 1
+    $class1 = '';
+    if ($f1 > 0 && $f1 <= 6) {
+        $class1 = ' class="t t1 f' . $f1 . '"';
+    } else if ($f1 == 8) {
+        $class1 = ' class="fs"';
+    }
+    $class2 = '';
+    if ($f2 > 0 && $f2 <= 6) {
+        $class2 = ' class="t t2 f' . $f2 . '"';
+    } else if ($f2 == 8) {
+        $class2 = ' class="fs"';
+    }
+    if ($fp > 0 && $fp <= 6) {
+        $text = str_replace('<p>' , '<p class="f' . $fp . '">', $text);
+    } else if ($fp == 8) {
+        $text = str_replace('<p>' , '<p class="fs">', $text);
+    }
+
+    $text = str_replace('<h2>' , '<p' . $class2 . '>', $text);
+    $text = str_replace('</h2>', '</p>', $text);
+
+    $text = str_replace('<h1>' , '<p' . $class1 . '>', $text);
+    $text = str_replace('</h1>', '</p>', $text);
+
+    return $text;
+}
+
+function stpg(array $arr, string $key, int $f1 = 0, int $f2 = 0, int $fp = 0, string $lang = '') {
+    if (!isset($arr[$key])) return null;
+    $text = '';
+
+    switch (gettype($arr[$key])) {
+        case 'integer':
+        case 'double':
+            $text = (string) $arr[$key];
+            break;
+
+        case 'string':
+            $text = stp($arr[$key], $f1, $f2, $fp);
+            break;
+
+        case 'array':
+            $app = Director::getApp();
+            if ($lang && in_array($lang, $app->langs)) {
+                $langKey = array_search($lang, $app->langs);
+                if ($langKey > 0) {
+                   unset($app->langs[$langKey]);
+                   array_unshift($app->langs, $lang);
+                }
+            }
+            foreach ($app->langs as $lang) {
+                if (!isset($arr[$key][$lang])) continue;
+                if (!is_string($arr[$key][$lang])) continue;
+                if (empty($arr[$key][$lang])) continue;
+                $text = stp($arr[$key][$lang], $f1, $f2, $fp);
                 break;
             }
             break;
@@ -269,8 +363,6 @@ function firstLine(string $text) {
 }
 
 
-
-
 // debug
 function d() {
     foreach(func_get_args() as $arg) {
@@ -408,7 +500,7 @@ function gNormalize($text, $delimiter = '-', $keep = '') {
     $text = \Normalizer::normalize($text);
 
     // replace non letter or digits by delimiter, keeping $keep characters
-    $text = preg_replace('~[^\pL\d' . $keep . ']+~u', $delimiter, $text);
+    $text = preg_replace('~[^\pL\d' . preg_quote($keep) . ']+~u', $delimiter, $text);
     return $text;
 }
 

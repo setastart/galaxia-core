@@ -1,5 +1,5 @@
 <?php
-/* Copyright 2017-2019 Ino Detelić
+/* Copyright 2017-2020 Ino Detelić
 
  - Licensed under the EUPL, Version 1.2 only (the "Licence");
  - You may not use this work except in compliance with the Licence.
@@ -16,7 +16,7 @@ namespace Galaxia;
 
 class App {
 
-    public $version   = '2019';
+    public $version   = '2020';
     public $minStatus = 2;
 
     public $dir       = '';
@@ -442,8 +442,7 @@ class App {
         $found = 0;
         foreach ($this->routes as $pageType => $patterns) {
             foreach ($patterns as $pattern => $methods) {
-                if (!isset($pages[$pageType])) continue;
-                foreach ($pages[$pageType] as $page) {
+                foreach ($pages[$pageType] ?? [] as $page) {
                     foreach ($methods as $method => $route) {
                         if ($method != 'GET') continue;
                         if (empty($route['sitemap'])) continue;
@@ -665,9 +664,13 @@ class App {
                         if ($wouldblock) {
                             flock($fp, LOCK_SH);
                         } else {
-
                             $imagickNew->cropThumbnailImage($multiW, $multiH);
                             $imagickNew->writeImage($imgDirSlug . '_' . $multiW . '_' . $multiH . $img['ext']);
+                            if ($img['ext'] == '.png') {
+                                $compressed = compress_png($imgDirSlug . '_' . $multiW . '_' . $multiH . $img['ext']);
+                                if ($compressed) file_put_contents($imgDirSlug . '_' . $multiW . '_' . $multiH . $img['ext'], $compressed);
+                                else devlog("could not pngquant image.");
+                            }
                             touch($imgDir, $img['mtime']);
                             flock($fp, LOCK_UN);
                         }
@@ -675,6 +678,11 @@ class App {
                     } else {
                         $imagickNew->cropThumbnailImage($multiW, $multiH);
                         $imagickNew->writeImage($imgDirSlug . '_' . $multiW . '_' . $multiH . $img['ext']);
+                        if ($img['ext'] == '.png') {
+                            $compressed = compress_png($imgDirSlug . '_' . $multiW . '_' . $multiH . $img['ext']);
+                            if ($compressed) file_put_contents($imgDirSlug . '_' . $multiW . '_' . $multiH . $img['ext'], $compressed);
+                            else devlog("could not pngquant image.");
+                        }
                         touch($imgDir, $img['mtime']);
                     }
 
@@ -694,7 +702,7 @@ class App {
 
 
 
-    public function imageUpload(array $files, $replace = false, $toFit = 0) {
+    public function imageUpload(array $files, $replace = false, int $toFit = 0, string $type = '') {
         // ddp($files);
         $uploaded = [];
         foreach ($files as $fileNameTemp => $fileNameProposed) {
@@ -706,8 +714,9 @@ class App {
 
 
             // read image
+            $imageContents = file_get_contents($fileNameTemp);
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
-            $mimeType = $finfo->buffer(file_get_contents($fileNameTemp));
+            $mimeType = $finfo->buffer($imageContents);
             if ($mimeType == 'image/jpeg') {
                 $fileExt = '.jpg';
             } else if ($mimeType == 'image/png') {
@@ -717,7 +726,8 @@ class App {
                 continue;
             }
             try {
-                $imagick = new \Imagick($fileNameTemp);
+                $imagick = new \Imagick;
+                $imagick->readImageBlob($imageContents);
             } catch (\ImagickException $e) {
                 error('Error opening image: ' . h($fileNameTemp));
                 devlog($e);
@@ -754,7 +764,6 @@ class App {
 
             // prepare and resize image
             gImagePrepare($imagick);
-            $toFit = (int)$toFit;
             $w = $imagick->getImageWidth();
             $h = $imagick->getImageHeight();
             if ($toFit > 0 && ($w > $toFit || $h > $toFit)) {
@@ -785,6 +794,9 @@ class App {
             }
 
             file_put_contents($fileDir . $fileSlug . '_dim.txt', $imagick->getImageWidth() . 'x' . $imagick->getImageHeight());
+            if ($type) {
+                file_put_contents($fileDir . $fileSlug . '_type.txt', h($type));
+            }
             $fileNameStripped = pathinfo($fileNameProposed, PATHINFO_FILENAME);
 
 

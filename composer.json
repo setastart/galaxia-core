@@ -20,8 +20,11 @@
             "./functions/gFile.php",
             "./functions/gImage.php",
             "./functions/input.php",
+            "./functions/pngquant.php",
+            "./functions/scrape.php",
             "./functions/sql.php",
-            "./functions/text.php"
+            "./functions/text.php",
+            "./functions/util.php"
         ]
     }
 }

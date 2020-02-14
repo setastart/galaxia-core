@@ -1,5 +1,5 @@
 <?php
-/* Copyright 2017-2019 Ino Detelić
+/* Copyright 2017-2020 Ino Detelić
 
  - Licensed under the EUPL, Version 1.2 only (the "Licence");
  - You may not use this work except in compliance with the Licence.
@@ -30,6 +30,7 @@ const PROTO_IMAGE = [
     'extra'       => [],
     'sizes'       => [1],
     'sizeDivisor' => 1,
+    'loading'     => 'lazy'
 ];
 
 
@@ -188,7 +189,7 @@ function gImageDelete(string $dirImage, string $imgSlug) {
 
 
 
-
+/** @deprecated  */
 function gImageRenderReflowSpacer($w, $h) {
     if ($w < 1) return;
     if ($h < 1) return;
@@ -210,6 +211,10 @@ function gImageRender($img, $extra = '') {
         $r .= ' lang="' . h($img['lang']) . '"';
     } else {
         $r .= ' alt=""';
+    }
+
+    if ($img['loading'] == 'lazy') {
+        $r .= ' loading="lazy"';
     }
 
     $r .= ' src="' . h($img['src'] ?? '') . '"';

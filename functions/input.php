@@ -1,5 +1,5 @@
 <?php
-/* Copyright 2017-2019 Ino Detelić
+/* Copyright 2017-2020 Ino Detelić
 
  - Licensed under the EUPL, Version 1.2 only (the "Licence");
  - You may not use this work except in compliance with the Licence.
@@ -51,6 +51,7 @@ const ALLOWED_INPUT_TYPES = [
     'select',
     'image',
     'importerJsonld',
+    'importerYoutube',
 ];
 
 
