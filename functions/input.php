@@ -36,6 +36,7 @@ const ALLOWED_INPUT_TYPES = [
     'password',
     'slug',
     'slugImage',
+    'raw',
     'text',
     'email',
     'url',
@@ -165,8 +166,9 @@ function validateInput($input, $value) {
             break;
 
 
+        case 'raw':
         case 'text':
-            // $input['value'] = filter_var($input['value'], FILTER_SANITIZE_STRING);
+            $input['value'] = filter_var($input['value'], FILTER_SANITIZE_STRING);
             $input['value'] = trim($input['value'], " \t\n\r\0\x0B");
             $input['value'] = preg_replace('/\s\s+/', ' ', $input['value']);
 
