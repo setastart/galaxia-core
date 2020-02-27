@@ -13,6 +13,12 @@
 */
 
 
+
+function slope(int $x1, int $y1, int $x2, int $y2) {
+    return ($y2 - $y1) / ($x2 - $x1);
+}
+
+
 /**
  * Get the y-intersect of two points
  * calc slope:       m = (y2 - y1) / (x2 - x1)

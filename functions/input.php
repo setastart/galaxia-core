@@ -167,8 +167,21 @@ function validateInput($input, $value) {
 
 
         case 'raw':
-        case 'text':
             $input['value'] = filter_var($input['value'], FILTER_SANITIZE_STRING);
+            $input['value'] = trim($input['value'], " \t\n\r\0\x0B");
+            $input['value'] = preg_replace('/\s\s+/', ' ', $input['value']);
+
+            if (isset($input['options']['minlength']))
+                if (mb_strlen($input['value']) < $input['options']['minlength'])
+                    $input['errors'][] = sprintf('Too short. Min %d characters.', $input['options']['minlength']);
+
+            if (isset($input['options']['maxlength']))
+                if (mb_strlen($input['value']) > $input['options']['maxlength'])
+                    $input['errors'][] = sprintf('Too long. Max %d characters.', $input['options']['maxlength']);
+            break;
+
+        case 'text':
+            // $input['value'] = filter_var($input['value'], FILTER_SANITIZE_STRING);
             $input['value'] = trim($input['value'], " \t\n\r\0\x0B");
             $input['value'] = preg_replace('/\s\s+/', ' ', $input['value']);
 
