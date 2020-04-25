@@ -12,8 +12,8 @@
  - See the Licence for the specific language governing permissions and limitations under the Licence.
 */
 
-const ALLOWED_MODS = ['COUNT', 'MIN', 'MAX', 'ANY_VALUE', 'DATE', 'TIME', 'YEAR', 'MONTH', 'DAY'];
-const ALLOWED_WHERE_LOGIC  = ['=', '<', '>', '<=', '>=', 'BETWEEN', 'IS NOT NULL'];
+const ALLOWED_MODS        = ['COUNT', 'MIN', 'MAX', 'ANY_VALUE', 'DATE', 'TIME', 'YEAR', 'MONTH', 'DAY'];
+const ALLOWED_WHERE_LOGIC = ['=', '<', '>', '<=', '>=', 'BETWEEN', 'IS NOT NULL', 'IS NULL', 'NOT IN'];
 
 
 
@@ -40,10 +40,6 @@ function queryInsert($expression, $changes, array $langs = null) {
 
     return $r;
 }
-
-
-
-
 
 
 
@@ -88,6 +84,7 @@ function querySelect(array $expression, array $langs = null) {
     $r = rtrim($r, ', ' . PHP_EOL) . PHP_EOL . PHP_EOL;
 
     $r .= 'FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;
+
     return $r;
 }
 
@@ -99,6 +96,7 @@ function querySelectOne(array $expression, array $langs = null) {
 
     $r = 'SELECT 1' . PHP_EOL . PHP_EOL;
     $r .= 'FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;
+
     return $r;
 }
 
@@ -111,6 +109,7 @@ function querySelectFirst(array $expression, array $langs = null) {
 
     $r = 'SELECT ' . q($firstColumn) . PHP_EOL . PHP_EOL;
     $r .= 'FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;
+
     return $r;
 }
 
@@ -133,6 +132,7 @@ function querySelectLeftJoinUsing(array $expression, array $langs = null) {
         }
         $r = rtrim($r, ', ') . ')' . PHP_EOL;
     }
+
     return $r . PHP_EOL . PHP_EOL;
 }
 
@@ -159,7 +159,41 @@ function querySelectWhere(array $expression, array $langs = null) {
             }
         }
     }
-    return rtrim($r,  ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+}
+
+
+function querySelectWherePrefix(array $expression, string $prefix = 'WHERE', string $operation = 'AND', array $langs = null) {
+    if (empty($expression)) return;
+    arrayReplaceHashtagWithParentName($expression);
+    if ($langs) arrayLanguifyRemovePerms($expression, $langs);
+
+    $r = $prefix . ' (' . PHP_EOL;
+    foreach ($expression as $table => $columns) {
+        foreach ($columns as $column => $logic) {
+            if (!in_array($logic, ALLOWED_WHERE_LOGIC)) $logic = '=';
+            switch ($logic) {
+                case 'BETWEEN':
+                    $r .= q($table) . '.' . q($column) . ' BETWEEN ? AND ?' . PHP_EOL;
+                    break;
+                case 'IS NULL':
+                    $r .= q($table) . '.' . q($column) . ' IS NULL ' . $operation . PHP_EOL;
+                    break;
+                case 'IS NOT NULL':
+                    $r .= q($table) . '.' . q($column) . ' IS NOT NULL ' . $operation . PHP_EOL;
+                    break;
+                case 'NOT IN':
+                    $r .= q($column) . ' NOT IN (SELECT ' . q($column) . ' FROM ' . q($table) . ')' . PHP_EOL;
+                    break;
+                default:
+                    $r .= q($table) . '.' . q($column) . ' ' . $logic . ' ? ' . $operation . PHP_EOL;
+                    break;
+            }
+        }
+    }
+
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . ')' . PHP_EOL . PHP_EOL;
 }
 
 
@@ -185,7 +219,8 @@ function querySelectWhereOr(array $expression, string $prefix = 'WHERE', array $
             }
         }
     }
-    return rtrim($r,  ' OR' . PHP_EOL) . PHP_EOL . ')' . PHP_EOL . PHP_EOL;
+
+    return rtrim($r, ' OR' . PHP_EOL) . PHP_EOL . ')' . PHP_EOL . PHP_EOL;
 }
 
 
@@ -200,8 +235,9 @@ function querySelectWhereIn(array $expression, array $langs = null) {
             $r .= q($table) . '.' . q($column) . ' IN (' . rtrim(str_repeat('?, ', $count), ', ') . ') AND' . PHP_EOL;
         }
     }
+
     // ddp($r);
-    return rtrim($r,  ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }
 
 
@@ -216,8 +252,9 @@ function querySelectWhereAndIn(array $expression, array $langs = null) {
             $r .= q($table) . '.' . q($column) . ' IN (' . rtrim(str_repeat('?, ', $count), ', ') . ') AND' . PHP_EOL;
         }
     }
+
     // ddp($r);
-    return rtrim($r,  ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }
 
 
@@ -245,9 +282,10 @@ function querySelectGroupBy(array $expression, array $langs = null) {
             }
 
             $column = $mod;
-            $r .= q($table) . '.' . q($column) . ', ' . PHP_EOL;
+            $r      .= q($table) . '.' . q($column) . ', ' . PHP_EOL;
         }
     }
+
     return rtrim($r, ', ' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }
 
@@ -283,15 +321,12 @@ function querySelectOrderBy(array $expression, array $langs = null) {
 
 function querySelectLimit($offset, $count) {
     $offset = (string)$offset;
-    $count = (string)$count;
+    $count  = (string)$count;
     $offset = ctype_digit($offset) ? (int)$offset : 0;
-    $count = ctype_digit($count) ? (int)$count : 1;
+    $count  = ctype_digit($count) ? (int)$count : 1;
+
     return 'LIMIT ' . $offset . ', ' . $count . PHP_EOL . PHP_EOL;
 }
-
-
-
-
 
 
 
@@ -302,6 +337,7 @@ function queryUpdate(array $expression, array $langs = null) {
     $firstTable = key($expression);
     arrayReplaceHashtagWithParentName($expression);
     if ($langs) arrayLanguifyRemovePerms($expression, $langs);
+
     return 'UPDATE ' . q($firstTable) . PHP_EOL . PHP_EOL;
 }
 
@@ -311,7 +347,8 @@ function queryUpdateSet(array $params) {
     foreach ($params as $param) {
         $r .= '    ' . q($param) . ' = ?, ' . PHP_EOL;
     }
-    return rtrim($r,  ', ' . PHP_EOL) . PHP_EOL . PHP_EOL;
+
+    return rtrim($r, ', ' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }
 
 function queryUpdateWhere(array $expression, array $langs = null) {
@@ -325,12 +362,9 @@ function queryUpdateWhere(array $expression, array $langs = null) {
             $r .= '    ' . q($table) . '.' . q($column) . ' = ? AND' . PHP_EOL;
         }
     }
-    return rtrim($r,  ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }
-
-
-
-
 
 
 
@@ -345,11 +379,12 @@ function queryDelete($expression, array $langs = null) {
     $r = 'DELETE FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;
 
     $columns = $expression[$firstTable];
-    $r .= 'WHERE ' . PHP_EOL;
+    $r       .= 'WHERE ' . PHP_EOL;
     foreach ($columns as $column) {
         $r .= '    ' . q($column) . ' = ? AND' . PHP_EOL;
     }
-    return rtrim($r,  ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }
 
 
@@ -365,7 +400,7 @@ function queryDeleteIn($table, $whereCols, $inCol, $ids) {
     foreach ($ids as $id)
         $r .= '?, ';
 
-    return rtrim($r,  ', ') . ')' . PHP_EOL;
+    return rtrim($r, ', ') . ')' . PHP_EOL;
 }
 
 
@@ -377,9 +412,10 @@ function queryDeleteOrNull($expression, array $langs = null) {
     $r = 'DELETE FROM ' . q($firstTable) . PHP_EOL . PHP_EOL;
 
     $columns = $expression[$firstTable];
-    $r .= 'WHERE ' . PHP_EOL;
+    $r       .= 'WHERE ' . PHP_EOL;
     foreach ($columns as $column) {
         $r .= '    (' . q($column) . ' = ? OR ' . q($column) . ' IS NULL) AND' . PHP_EOL;
     }
-    return rtrim($r,  ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
+
+    return rtrim($r, ' AND' . PHP_EOL) . PHP_EOL . PHP_EOL;
 }

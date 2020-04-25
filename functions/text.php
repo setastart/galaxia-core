@@ -40,19 +40,60 @@ function hg(array $arr, string $key, string $lang = '') {
             break;
 
         case 'array':
-            $app = Director::getApp();
-            if ($lang && in_array($lang, $app->langs)) {
-                $langKey = array_search($lang, $app->langs);
+            $langs = Director::getApp()->langs;
+            if ($lang && in_array($lang, $langs)) {
+                $langKey = array_search($lang, $langs);
                 if ($langKey > 0) {
-                   unset($app->langs[$langKey]);
-                   array_unshift($app->langs, $lang);
+                   unset($langs[$langKey]);
+                   array_unshift($langs, $lang);
                 }
             }
-            foreach ($app->langs as $lang) {
+            foreach ($langs as $lang) {
                 if (!isset($arr[$key][$lang])) continue;
                 if (!is_string($arr[$key][$lang])) continue;
                 if (empty($arr[$key][$lang])) continue;
                 $text = htmlspecialchars($arr[$key][$lang], HTMLSPECIALCHARS_FLAGS);
+                break;
+            }
+            break;
+    }
+
+    if ($text !== '0' && empty($text)) return null;
+    return $text;
+}
+
+
+
+
+function unsafeg(array $arr, string $key, string $lang = '') {
+    if (empty($arr)) return null;
+    if (!isset($arr[$key])) return null;
+    $text = null;
+
+    switch (gettype($arr[$key])) {
+        case 'integer':
+        case 'double':
+            $text = (string) $arr[$key];
+            break;
+
+        case 'string':
+            $text = $arr[$key];
+            break;
+
+        case 'array':
+            $langs = Director::getApp()->langs;
+            if ($lang && in_array($lang, $langs)) {
+                $langKey = array_search($lang, $langs);
+                if ($langKey > 0) {
+                   unset($langs[$langKey]);
+                   array_unshift($langs, $lang);
+                }
+            }
+            foreach ($langs as $lang) {
+                if (!isset($arr[$key][$lang])) continue;
+                if (!is_string($arr[$key][$lang])) continue;
+                if (empty($arr[$key][$lang])) continue;
+                $text = (string) $arr[$key][$lang];
                 break;
             }
             break;
@@ -119,15 +160,15 @@ function stg(array $arr, string $key, int $h1 = 0, int $f1 = 0, int $f2 = 0, str
             break;
 
         case 'array':
-            $app = Director::getApp();
-            if ($lang && in_array($lang, $app->langs)) {
-                $langKey = array_search($lang, $app->langs);
+            $langs = Director::getApp()->langs;
+            if ($lang && in_array($lang, $langs)) {
+                $langKey = array_search($lang, $langs);
                 if ($langKey > 0) {
-                   unset($app->langs[$langKey]);
-                   array_unshift($app->langs, $lang);
+                   unset($langs[$langKey]);
+                   array_unshift($langs, $lang);
                 }
             }
-            foreach ($app->langs as $lang) {
+            foreach ($langs as $lang) {
                 if (!isset($arr[$key][$lang])) continue;
                 if (!is_string($arr[$key][$lang])) continue;
                 if (empty($arr[$key][$lang])) continue;
@@ -209,15 +250,15 @@ function stpg(array $arr, string $key, int $f1 = 0, int $f2 = 0, int $fp = 0, st
             break;
 
         case 'array':
-            $app = Director::getApp();
-            if ($lang && in_array($lang, $app->langs)) {
-                $langKey = array_search($lang, $app->langs);
+            $langs = Director::getApp()->langs;
+            if ($lang && in_array($lang, $langs)) {
+                $langKey = array_search($lang, $langs);
                 if ($langKey > 0) {
-                   unset($app->langs[$langKey]);
-                   array_unshift($app->langs, $lang);
+                   unset($langs[$langKey]);
+                   array_unshift($langs, $lang);
                 }
             }
-            foreach ($app->langs as $lang) {
+            foreach ($langs as $lang) {
                 if (!isset($arr[$key][$lang])) continue;
                 if (!is_string($arr[$key][$lang])) continue;
                 if (empty($arr[$key][$lang])) continue;
@@ -306,15 +347,15 @@ function descg(array $arr, string $key, int $length = null, string $separator = 
             break;
 
         case 'array':
-            $app = Director::getApp();
-            if ($lang && in_array($lang, $app->langs)) {
-                $langKey = array_search($lang, $app->langs);
+            $langs = Director::getApp()->langs;
+            if ($lang && in_array($lang, $langs)) {
+                $langKey = array_search($lang, $langs);
                 if ($langKey > 0) {
-                   unset($app->langs[$langKey]);
-                   array_unshift($app->langs, $lang);
+                   unset($langs[$langKey]);
+                   array_unshift($langs, $lang);
                 }
             }
-            foreach ($app->langs as $lang) {
+            foreach ($langs as $lang) {
                 if (!isset($arr[$key][$lang])) continue;
                 if (!is_string($arr[$key][$lang])) continue;
                 if (empty($arr[$key][$lang])) continue;
@@ -337,6 +378,18 @@ function t($text, $lang = null) {
     }
     // if (Director::$debug) $text = '@' . $text;
     return htmlspecialchars($text, HTMLSPECIALCHARS_FLAGS);
+}
+
+
+
+function unsafet($text, $lang = null) {
+    $app = Director::getApp();
+    if ($lang == null) $lang = $app->lang;
+    if (isset(Director::$translations[$text][$lang])) {
+        return Director::$translations[$text][$lang];
+    }
+    // if (Director::$debug) $text = '@' . $text;
+    return $text;
 }
 
 

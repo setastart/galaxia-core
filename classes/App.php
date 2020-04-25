@@ -20,28 +20,69 @@ class App {
     public $minStatus = 2;
 
     public $dir       = '';
+
+    /**
+     * @deprecated
+     */
     public $dirLayout = '';
+
+    /**
+     * @deprecated
+     */
     public $dirLogic  = '';
+
+    /**
+     * @deprecated
+     */
     public $dirModel  = '';
-    public $dirView   = '';
+
+    /**
+     * @deprecated
+     */
+    public $dirView = '';
+
     public $dirLog    = '';
     public $dirCache  = '';
     public $dirImage  = '';
     public $urlImages = '/media/image/';
 
+    /**
+     * @deprecated
+     */
     public $requestUri = '';
+
+    /**
+     * @deprecated
+     */
     public $requestUriNormalized = '';
+
     public $routes    = [];
+
+    /**
+     * @deprecated
+     */
     public $routeVars = [];
 
+    /**
+     * @deprecated
+     */
+    public $logic  = '';
+    
     public $pageId     = 0;
     public $pageIsRoot = false;
+
     public $pagesById  = null;
     private $slugsAndRedirectsByType = null;
     public $cacheBypassAll = false;
 
-    public $logic  = '';
+    /**
+     * @deprecated
+     */
     public $view   = '';
+
+    /**
+     * @deprecated
+     */
     public $layout = 'layout-default';
 
     public $locale = ['url' => '/', 'long' => 'en_US', 'full' => 'English'];

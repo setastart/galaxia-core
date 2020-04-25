@@ -61,6 +61,16 @@ function gImageDimensions(string $dirImage, string $imgSlug) {
 
 
 
+function gImageAlt(string $dirImage, string $imgSlug, $lang) {
+    $file = $dirImage . $imgSlug . '/' . $imgSlug . '_alt_' . $lang . '.txt';
+    if (!file_exists($file)) return;
+    $alt = file_get_contents($file);
+    return $alt;
+}
+
+
+
+
 function gImagePrepare(&$imagick) {
     $iccProfiles = $imagick->getImageProfiles("icc", true);
     $imagick->stripImage();

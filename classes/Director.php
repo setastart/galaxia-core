@@ -31,8 +31,9 @@ class Director {
 
     static $translations = [];
     static $ajax = false;
-    static $nofollowHosts = ['facebook', 'google', 'instagram', 'twitter', 'linkedin', 'youtube'];
+    static $nofollowHosts = ['facebook', 'google', 'instagram', 'twitter', 'linkedin', 'youtube']; // todo: refactor
 
+    // todo: convert to const
     static $pDefault = [
         'id'      => '', // current subpage or page id
         'type'    => 'default',
@@ -72,13 +73,13 @@ class Director {
         ini_set('display_errors', '0');
         libxml_use_internal_errors(true);
 
-        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')) self::$ajax = true;
+        if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') == 'XMLHttpRequest') self::$ajax = true;
 
 
         $app = new App($dir);
 
         if ($app->cookieDebugVal && $app->cookieDebugKey && isset($_COOKIE)) {
-            if (isset($_COOKIE[$app->cookieDebugKey]) && $_COOKIE[$app->cookieDebugKey] == $app->cookieDebugVal) {
+            if (($_COOKIE[$app->cookieDebugKey] ?? null) === $app->cookieDebugVal) {
                 self::debugEnable();
             }
         }

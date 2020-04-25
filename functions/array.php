@@ -27,8 +27,12 @@ if (!function_exists('array_key_first')) {
         return NULL;
     }
 }
-
-
+if (!function_exists('array_key_last')) {
+    function array_key_last(array $arr) {
+        if (empty($arr)) return null;
+        return key(array_slice($arr, -1, 1, true));
+    }
+}
 
 
 function array_splice_preserve_keys(&$input, $offset, $length = null, $replacement = array()) {

@@ -19,7 +19,8 @@ function redirect($location = '', int $code = 303) {
         echo 'headers already sent. redirect: <a href="' . h($location) . '">' . h($location) . '</a>' . PHP_EOL;
         exit();
     }
-    $location = ltrim(h($location), '/');
+    $location = trim(h($location), '/');
+    if ($_SERVER['QUERY_STRING'] ?? '') $location .= '?' . $_SERVER['QUERY_STRING'];
     header('Location: /' . $location, true, $code);
     exit();
 }
@@ -32,8 +33,8 @@ function redirect($location = '', int $code = 303) {
 function msgBoxes($type, $arrayIndex = false) {
     $key = $type . 's';
     $domain = $type . 'Box';
-    if ($arrayIndex !== false) return (isset($_SESSION[$key][$domain][$arrayIndex])) ? $_SESSION[$key][$domain][$arrayIndex] : [];
-    return (isset($_SESSION[$key][$domain])) ? $_SESSION[$key][$domain] : [];
+    if ($arrayIndex !== false) return $_SESSION[$key][$domain][$arrayIndex] ?? [];
+    return $_SESSION[$key][$domain] ?? [];
 }
 
 
@@ -56,10 +57,10 @@ function hasError($domain = null, $arrayIndex = false) {
 }
 function errors($domain = null, $arrayIndex = false) {
     if (isset($domain)) {
-        if ($arrayIndex !== false) return (isset($_SESSION['errors'][$domain][$arrayIndex])) ? $_SESSION['errors'][$domain][$arrayIndex] : [];
-        return (isset($_SESSION['errors'][$domain])) ? $_SESSION['errors'][$domain] : [];
+        if ($arrayIndex !== false) return $_SESSION['errors'][$domain][$arrayIndex] ?? [];
+        return $_SESSION['errors'][$domain] ?? [];
     } else {
-        return (isset($_SESSION['errors'])) ? $_SESSION['errors'] : [];
+        return $_SESSION['errors'] ?? [];
     }
 }
 
@@ -83,10 +84,10 @@ function hasWarning($domain = null, $arrayIndex = false) {
 }
 function warnings($domain = null, $arrayIndex = false) {
     if (isset($domain)) {
-        if ($arrayIndex !== false) return (isset($_SESSION['warnings'][$domain][$arrayIndex])) ? $_SESSION['warnings'][$domain][$arrayIndex] : [];
-        return (isset($_SESSION['warnings'][$domain])) ? $_SESSION['warnings'][$domain] : [];
+        if ($arrayIndex !== false) return $_SESSION['warnings'][$domain][$arrayIndex] ?? [];
+        return $_SESSION['warnings'][$domain] ?? [];
     } else {
-        return (isset($_SESSION['warnings'])) ? $_SESSION['warnings'] : [];
+        return $_SESSION['warnings'] ?? [];
     }
 }
 
@@ -110,10 +111,10 @@ function hasInfo($domain = null, $arrayIndex = false) {
 }
 function infos($domain = null, $arrayIndex = false) {
     if (isset($domain)) {
-        if ($arrayIndex !== false) return (isset($_SESSION['infos'][$domain][$arrayIndex])) ? $_SESSION['infos'][$domain][$arrayIndex] : [];
-        return (isset($_SESSION['infos'][$domain])) ? $_SESSION['infos'][$domain] : [];
+        if ($arrayIndex !== false) return $_SESSION['infos'][$domain][$arrayIndex] ?? [];
+        return $_SESSION['infos'][$domain] ?? [];
     } else {
-        return (isset($_SESSION['infos'])) ? $_SESSION['infos'] : [];
+        return $_SESSION['infos'] ?? [];
     }
 }
 
@@ -137,10 +138,10 @@ function hasDevlog($domain = null, $arrayIndex = false) {
 }
 function devlogs($domain = null, $arrayIndex = false) {
     if (isset($domain)) {
-        if ($arrayIndex !== false) return (isset($_SESSION['devlogs'][$domain][$arrayIndex])) ? $_SESSION['devlogs'][$domain][$arrayIndex] : [];
-        return (isset($_SESSION['devlogs'][$domain])) ? $_SESSION['devlogs'][$domain] : [];
+        if ($arrayIndex !== false) return $_SESSION['devlogs'][$domain][$arrayIndex] ?? [];
+        return $_SESSION['devlogs'][$domain] ?? [];
     } else {
-        return (isset($_SESSION['devlogs'])) ? $_SESSION['devlogs'] : [];
+        return $_SESSION['devlogs'] ?? [];
     }
 }
 
