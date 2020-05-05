@@ -530,7 +530,7 @@ class App {
 
                                 $r .= '<url>' . PHP_EOL;
                                 $r .= '  <priority>' . $sm['priority'] . '</priority>' . PHP_EOL;
-                                $r .= '  <loc>' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $this->addLangPrefix($page['pageSlug_' . key($this->locales)] . $subLang[key($this->locales)]) . '</loc>' . PHP_EOL;
+                                $r .= '  <loc>' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $this->addLangPrefix($page['pageSlug_' . key($this->locales)], key($this->locales)) . '</loc>' . PHP_EOL;
                                 if (count($this->locales) > 1) {
                                     foreach ($this->locales as $lang => $locale) {
                                         $r .= '  <xhtml:link hreflang="' . $lang . '" href="' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $this->addLangPrefix($page['pageSlug_' . $lang] . $subLang[$lang], $lang) . '" rel="alternate"/>' .PHP_EOL;
@@ -545,7 +545,7 @@ class App {
                         if ($pattern == '') {
                             $r .= '<url>' . PHP_EOL;
                             $r .= '  <priority>' . $sm['priority'] . '</priority>' . PHP_EOL;
-                            $r .= '  <loc>' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $this->addLangPrefix($page['pageSlug_' . key($this->locales)]) . '</loc>' . PHP_EOL;
+                            $r .= '  <loc>' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $this->addLangPrefix($page['pageSlug_' . key($this->locales)], key($this->locales)) . '</loc>' . PHP_EOL;
                             if (count($this->locales) > 1) {
                                 foreach ($this->locales as $lang => $locale) {
                                     $r .= '  <xhtml:link hreflang="' . $lang . '" href="' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $this->addLangPrefix($page['pageSlug_' . $lang], $lang) . '" rel="alternate"/>' .PHP_EOL;

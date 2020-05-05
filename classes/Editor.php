@@ -17,7 +17,7 @@ namespace Galaxia;
 class Editor {
 
     public $debug = false;
-    public $version = '2.7.9';
+    public $version = '';
 
     public $dir       = '';
     public $dirLayout = '';
