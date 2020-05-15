@@ -244,6 +244,8 @@ class App {
         $this->pagesById += $pagesByIdDraft;
     }
 
+
+    // todo: softcode 'pgSlug' as an optional function parameter $pageSlug = 'pgSlug'
     function defaultRoutes(int $pageMinStatus, $cachePostfix, $cacheBypass) {
         $routes = [];
         $routesVisited = [];

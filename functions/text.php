@@ -472,15 +472,15 @@ function db() {
 
 // Render links
 
-function renderLinkEmail(string $email, string $subject = '', string $class = '') {
+function renderLinkEmail(string $email, string $subject = '', string $class = '', string $prepend = '', string $append = '') {
     if (!$email = filter_var($email, FILTER_VALIDATE_EMAIL)) return null;
     $email = h($email);
     if ($subject) $subject = '?subject=' . h($subject);
     if (!empty($class)) $class = ' class="' . h($class) . '"';
-    return '<a aria-label="' . t('Email') . '" href="mailto:' . $email . $subject . '"' . $class . '>' . $email . '</a>';
+    return '<a aria-label="' . t('Email') . '" href="mailto:' . $email . $subject . '"' . $class . '>' . $prepend . $email . $append . '</a>';
 }
 
-function renderLinkTel(string $prefix, string $tel = '', string $class = '') {
+function renderLinkTel(string $prefix, string $tel = '', string $class = '', string $prepend = '', string $append = '') {
     if (!$tel) return null;
     $prefix = h(preg_replace('/[\D]/', '', $prefix));
     $prefixSmall = '';
@@ -495,7 +495,7 @@ function renderLinkTel(string $prefix, string $tel = '', string $class = '') {
         $telStripped = ltrim($telStripped, '0');
     }
     if (!empty($class)) $class = ' class="' . h($class) . '"';
-    return '<a aria-label="' . t('Phone') . '" href="tel:' . $prefix . $telStripped . '"' . $class . '>' . $prefixSmall . $telFormatted . '</a>';
+    return '<a aria-label="' . t('Phone') . '" href="tel:' . $prefix . $telStripped . '"' . $class . '>' . $prepend . $prefixSmall . $telFormatted . $append . '</a>';
 }
 
 
