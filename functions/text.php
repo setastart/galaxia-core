@@ -24,6 +24,11 @@ function h($text, bool $condition = true) {
     if ($condition) return htmlspecialchars((string) $text, HTMLSPECIALCHARS_FLAGS);
 }
 
+function unsafe($text, bool $condition = true) {
+    if ($condition) return $text;
+    return null;
+}
+
 function hg(array $arr, string $key, string $lang = '') {
     if (empty($arr)) return null;
     if (!isset($arr[$key])) return null;
